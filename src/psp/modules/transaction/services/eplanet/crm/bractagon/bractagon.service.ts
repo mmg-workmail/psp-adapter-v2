@@ -76,7 +76,10 @@ export class BractagonService {
         const gatewayType = gateway.type
         this.logger.log(`The gateway type is ${gatewayType}`);
 
+        // Payment Provider
         const paymentProvider = this.paymentService.processPayment(gatewayType);
+
+
 
         return paymentProvider.processPayment(transaction.amount);
     }
