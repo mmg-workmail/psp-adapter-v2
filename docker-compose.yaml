@@ -1,0 +1,22 @@
+version: '0.1'
+
+services:
+  application:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: psp_adapter_v2
+    hostname: psp_adapter_v2
+    image: psp_adapter_v2
+    ports:
+      - '4002:3000'
+      - '4005:5005'
+    volumes:
+      - ./src:/app/src
+      - ./node_modules:/app/node_modules
+    #
+    networks:
+      - devnet
+networks:
+  devnet:
+    external: true
