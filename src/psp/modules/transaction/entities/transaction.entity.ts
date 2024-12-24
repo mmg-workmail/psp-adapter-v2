@@ -9,6 +9,8 @@ import {
     JoinColumn,
     Entity,
     Index,
+    OneToMany,
+    ManyToOne,
 } from 'typeorm';
 import { Merchant } from '../../merchant/entities/merchant.entity';
 
@@ -57,9 +59,7 @@ export class Transaction {
     @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
     updatedAt: Date;
 
-    // Example of a One-to-One relationship (optional)
-    @OneToOne(() => Merchant, { nullable: false })
+    @ManyToOne(() => Merchant, (merchant) => merchant.merchantId)
     @JoinColumn()
-    merchant: Merchant;
-
+    merchant: Merchant
 }

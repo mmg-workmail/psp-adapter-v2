@@ -13,10 +13,18 @@ import { BractagonService } from './services/eplanet/crm/bractagon/bractagon.ser
 import { BractagonController } from './controllers/eplanet/crm/bractagon/bractagon.controller';
 import { TransactionStatsService } from './services/db/transaction-stats/transaction-stats.service';
 import { TransactionService } from './services/db/transaction/transaction.service';
+import { GatewayRegistry } from './infrastructure/factories/gateway-registry';
+import { TcPayGateway } from './infrastructure/gateways/tc-pay.gateway';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Transaction, TransactionStats]), GatewaysModule, MerchantModule],
+  imports: [TypeOrmModule.forFeature([Transaction, TransactionStats]), HttpModule, GatewaysModule, MerchantModule],
   controllers: [TcPayController, BractagonController],
-  providers: [TransactionService, PaymentService, GatewayFactory, BractagonService, TransactionStatsService],
+  providers: [
+    TransactionService, TransactionStatsService, PaymentService,
+    GatewayFactory, GatewayRegistry,
+    TcPayGateway,
+    BractagonService
+  ],
 })
 export class TransactionModule { }

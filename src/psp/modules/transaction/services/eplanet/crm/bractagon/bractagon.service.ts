@@ -8,6 +8,7 @@ import { CreateTransactionDto } from 'src/psp/modules/transaction/dto/db/create-
 import { CreateTransactionStatsDto } from 'src/psp/modules/transaction/dto/db/create-transaction-stats.dto';
 import { TransactionStatus } from 'src/psp/enums/TransactionStatus';
 import { PaymentService } from 'src/psp/modules/transaction/infrastructure/services/payment.service';
+import { BractagonResponseGeneratePaymentLink } from 'src/psp/modules/transaction/infrastructure/interfaces/eplanet/crm/bractagon/bractagon-response-generate-payment-link.interface';
 
 @Injectable()
 export class BractagonService {
@@ -22,7 +23,7 @@ export class BractagonService {
         private readonly paymentService: PaymentService,
     ) { }
 
-    async openPayment(bractagonOpenTransactionDto: BractagonOpenTransactionDto) {
+    async openPayment(bractagonOpenTransactionDto: BractagonOpenTransactionDto): Promise<BractagonResponseGeneratePaymentLink> {
 
         this.logger.log("start open gateway with orderId: " + bractagonOpenTransactionDto.order_no);
 
@@ -64,13 +65,12 @@ export class BractagonService {
         this.logger.log(`Transaction was created with id : ${transaction.id}`);
 
 
-        // Store Transaction Stats
-        const createTransactionStatDto = new CreateTransactionStatsDto({
+        // Store Initiated Transaction Stats
+        const initiatedTransactionStatDto = new CreateTransactionStatsDto({
             status: TransactionStatus.INITIATED,
             transaction: transaction
         });
-        const transactionStats = await this.transactionStatsService.create(createTransactionStatDto);
-        this.logger.log(`Transaction stats was created with id : ${transactionStats.id}`);
+        await this.transactionStatsService.create(initiatedTransactionStatDto);
 
         // Find Gateway Type
         const gatewayType = gateway.type
@@ -79,8 +79,27 @@ export class BractagonService {
         // Payment Provider
         const paymentProvider = this.paymentService.processPayment(gatewayType);
 
+        // Store Sent Transaction Stats
+        const sentTransactionStatDto = new CreateTransactionStatsDto({
+            status: TransactionStatus.SENT,
+            transaction: transaction
+        });
+        const sentTransactionStats = await this.transactionStatsService.create(sentTransactionStatDto);
 
+        const result = await paymentProvider
+            .setGateway(gateway)
+            .setTransaction(transaction)
+            .setTransactionStats(sentTransactionStats)
+            .generatePaymentLink();
 
-        return paymentProvider.processPayment(transaction.amount);
+        const bractagonResponseGeneratePaymentLink: BractagonResponseGeneratePaymentLink = {
+            data: {
+                url: result.url
+            },
+            result: true,
+            msg: ""
+        };
+
+        return bractagonResponseGeneratePaymentLink;
     }
 }

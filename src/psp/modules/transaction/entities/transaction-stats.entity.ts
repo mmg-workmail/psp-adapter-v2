@@ -7,6 +7,7 @@ import {
     OneToOne,
     JoinColumn,
     Entity,
+    ManyToOne,
 } from 'typeorm';
 import { Transaction } from './transaction.entity';
 
@@ -18,8 +19,7 @@ export class TransactionStats {
     @Column({ type: 'enum', enum: TransactionStatus, default: TransactionStatus.INITIATED, name: 'status' })
     status: TransactionStatus;
 
-    // Example of a One-to-One relationship (optional)
-    @OneToOne(() => Transaction, { nullable: false })
+    @ManyToOne(() => Transaction, (transaction) => transaction.id)
     @JoinColumn()
     transaction: Transaction;
 
