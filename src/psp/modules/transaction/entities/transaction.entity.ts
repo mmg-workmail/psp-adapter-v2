@@ -59,7 +59,7 @@ export class Transaction {
     @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
     updatedAt: Date;
 
-    @ManyToOne(() => Merchant, (merchant) => merchant.merchantId)
-    @JoinColumn()
+    @ManyToOne(() => Merchant, (merchant) => merchant.id)
+    @JoinColumn({ name: 'merchant_id' })
     merchant: Merchant
 }

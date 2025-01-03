@@ -20,7 +20,7 @@ export class TransactionStats {
     status: TransactionStatus;
 
     @ManyToOne(() => Transaction, (transaction) => transaction.id)
-    @JoinColumn()
+    @JoinColumn({ name: 'transaction_id' })
     transaction: Transaction;
 
     @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })

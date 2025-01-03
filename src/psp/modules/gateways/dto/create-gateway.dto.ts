@@ -1,5 +1,5 @@
 import { Currency } from "src/psp/enums/currency";
-import { GatewayType } from "../../transaction/infrastructure/enums/gateway-type";
+import { GatewayType } from "../../payment-methods/enums/gateway-type";
 
 export class CreateGatewayDto {
     name: string;

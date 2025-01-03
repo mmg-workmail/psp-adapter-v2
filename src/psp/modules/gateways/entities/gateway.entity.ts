@@ -17,7 +17,7 @@ import {
 import { Merchant } from '../../merchant/entities/merchant.entity';
 import { JsonUtils } from 'src/shared/classes/json-utils/json-utils';
 import { Encryption } from 'src/shared/classes/encryption/encryption';
-import { GatewayType } from '../../transaction/infrastructure/enums/gateway-type';
+import { GatewayType } from '../../payment-methods/enums/gateway-type';
 
 @Entity()
 export class Gateway {
