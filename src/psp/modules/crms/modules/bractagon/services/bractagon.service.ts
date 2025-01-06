@@ -164,13 +164,10 @@ export class BractagonService {
             'crm-pay-token': merchant.token,
         };
 
-
-        const eplanetUrlCallback = 'https://crm-user-api.broctagon.com/pay/callback';
-
         try {
 
             await firstValueFrom(
-                this.httpService.post(eplanetUrlCallback, body, { headers })
+                this.httpService.post(merchant.callbackUrl, body, { headers })
             );
 
             const TransactionStatDto = new CreateTransactionStatsDto({
