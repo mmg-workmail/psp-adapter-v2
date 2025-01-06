@@ -13,7 +13,7 @@ export class BractagonController {
     constructor(private readonly bractagonService: BractagonService) { }
 
     @UseGuards(BractagonGuard)
-    @Post('tc-pay/open')
+    @Post('tc-pay/open/pay/url')
     open(@Body() bractagonOpenTransactionDto: BractagonOpenTransactionDto): Promise<BractagonResponseGeneratePaymentLink> {
         return this.bractagonService.openPayment(bractagonOpenTransactionDto);
     }
