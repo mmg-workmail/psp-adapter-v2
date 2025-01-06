@@ -18,6 +18,10 @@ export class TransactionService {
         return this.transactionRepository.findOne({ where: { externalOrderId }, relations: ['merchant'] });
     }
 
+    checkExternalTrackNumber(externalTrackNumber: string) {
+        return this.transactionRepository.findOne({ where: { externalTrackNumber } });
+    }
+
     create(createTransactionDto: CreateTransactionDto) {
         return this.transactionRepository.save(createTransactionDto);
     }

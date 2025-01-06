@@ -1,4 +1,4 @@
-import { BadRequestException, CanActivate, ExecutionContext, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, CanActivate, ExecutionContext, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 
 
 import { plainToInstance } from 'class-transformer';
@@ -23,10 +23,6 @@ import { Price } from 'src/shared/classes/price/price';
 export class TcpayCallbackGuard implements CanActivate {
 
     private readonly logger = new Logger(TcpayCallbackGuard.name, { timestamp: true });
-
-    private transaction: Transaction;
-    private gateway: Gateway;
-
     constructor(
         private readonly transactionService: TransactionService,
         private readonly transactionStatsService: TransactionStatsService,
@@ -46,56 +42,62 @@ export class TcpayCallbackGuard implements CanActivate {
 
         const resCode = parseInt(payload.resCode);
 
-        this.transaction = await this.transactionService.checkExternalOrderId(payload['data.Token']);
-        if (!this.transaction) {
+        const transaction = await this.transactionService.checkExternalOrderId(payload['data.Token']);
+        if (!transaction) {
             this.logger.error(`Transaction with this ${payload['data.Token']} not found`);
-            throw new UnauthorizedException('Transaction is not found');
+            throw new NotFoundException('Transaction is not found');
         }
 
-        if (this.transaction.externalTrackNumber) {
-            this.logger.error(`Transaction was already done, Transaction ID : ${this.transaction.id}`);
-            throw new UnauthorizedException('Transaction was already done');
+        if (transaction.externalTrackNumber) {
+            this.logger.error(`Transaction was already done, Transaction ID : ${transaction.id}`);
+            throw new BadRequestException('Transaction was already done');
         }
 
-        const transactionStats = await this.transactionStatsService.findLastItem(this.transaction.id);
+        const transactionStats = await this.transactionStatsService.findLastItem(transaction.id);
         if (!transactionStats) {
-            this.logger.error(`Transaction status is not found, Transaction ID : ${this.transaction.id}`);
-            throw new UnauthorizedException('Transaction status is not found');
+            this.logger.error(`Transaction status is not found, Transaction ID : ${transaction.id}`);
+            throw new NotFoundException('Transaction status is not found');
         }
 
         if (resCode) {
             // Store Error Transaction Stats
             const errorTransactionStatDto = new CreateTransactionStatsDto({
-                status: TransactionStatus.ERROR,
-                transaction: this.transaction
+                status: TransactionStatus.PROCESSING_FAILED,
+                transaction: transaction
             });
             await this.transactionStatsService.create(errorTransactionStatDto);
-            this.logger.error(`Payment operation is not successful, Transaction ID : ${this.transaction.id}`);
-            throw new UnauthorizedException('Payment operation is not successful');
+            this.logger.error(`Payment operation is not successful, Transaction ID : ${transaction.id} with res code : ${resCode}`);
+            throw new BadRequestException('Payment operation is not successful', payload.description);
         }
 
-        this.gateway = await this.gatewaysService.findOneByMerchantId(this.transaction.merchant.merchantId);
+        const gateway = await this.gatewaysService.findOneByMerchantId(transaction.merchant.merchantId);
 
 
-        const paymentVerificationResult: TcpayVerificationTransactionDto = await this.checkPaymentVerification(payload);
+        const paymentVerificationResult: TcpayVerificationTransactionDto = await this.checkPaymentVerification(payload, gateway, transaction);
 
-        this.transaction.externalTrackNumber = paymentVerificationResult.data.transactionId;
-        this.transaction.actualDepositAmount = paymentVerificationResult.data.amount;
+        transaction.externalTrackNumber = paymentVerificationResult.data.transactionId;
+        transaction.actualDepositAmount = paymentVerificationResult.data.amount;
 
-        await this.transactionService.save(this.transaction);
+        await this.transactionService.save(transaction);
 
         return true;
     }
 
-    async checkPaymentVerification(payload: TcpayCallbackTransactionDto): Promise<TcpayVerificationTransactionDto> {
+    async checkPaymentVerification(payload: TcpayCallbackTransactionDto, gateway: Gateway, transaction: Transaction): Promise<TcpayVerificationTransactionDto> {
 
-        const config = this.gateway.encodedConfig as TcPayEncodedConfig;
+        const config = gateway.encodedConfig as TcPayEncodedConfig;
 
         const params = {
             token: payload['data.Token'],
             private_key: config.privateKeyXml,
             generate_url: config.baseUrl + config.paymentVerification
         };
+
+        const getAuthenticationStartTransactionStatDto = new CreateTransactionStatsDto({
+            status: TransactionStatus.AUTHENTICATION_START,
+            transaction: transaction
+        });
+        await this.transactionStatsService.create(getAuthenticationStartTransactionStatDto);
 
         const { data } = await firstValueFrom(
             this.httpService.post<TcpayVerificationTransactionDto>(config.generateSignVerify, params)
@@ -105,32 +107,50 @@ export class TcpayCallbackGuard implements CanActivate {
             // Store Status Link Transaction Stats
             const getStatusLinkTransactionStatDto = new CreateTransactionStatsDto({
                 status: TransactionStatus.AUTHENTICATION_ERROR,
-                transaction: this.transaction
+                transaction: transaction
             });
-
-            this.logger.error(`Transaction was rejected By Tc-pay, Transaction ID : ${this.transaction.id}`);
-
             await this.transactionStatsService.create(getStatusLinkTransactionStatDto);
+
+            this.logger.error(`Transaction was rejected By Tc-pay, Transaction ID : ${transaction.id} With res code : ${data.resCode} and this is description : ${data.description}`);
             throw new BadRequestException('Transaction was rejected By Tc-pay', data.description);
         } else {
             // Store Status Link Transaction Stats
             const getStatusLinkTransactionStatDto = new CreateTransactionStatsDto({
-                status: TransactionStatus.AUTHENTICATION_APPROVED,
-                transaction: this.transaction
+                status: TransactionStatus.RESULT_RECEIVED,
+                transaction: transaction
             });
             await this.transactionStatsService.create(getStatusLinkTransactionStatDto);
         }
 
-        if (Price.formatToTwoDecimalPlaces(this.transaction.amount) != Price.formatToTwoDecimalPlaces(data.data.amount)) {
+        if (Price.formatToTwoDecimalPlaces(transaction.amount) != Price.formatToTwoDecimalPlaces(data.data.amount)) {
             // Store Status Link Transaction Stats
             const getStatusLinkTransactionStatDto = new CreateTransactionStatsDto({
-                status: TransactionStatus.AUTHENTICATION_ERROR,
-                transaction: this.transaction
+                status: TransactionStatus.PROCESSING_FAILED,
+                transaction: transaction
             });
-            this.logger.error(`Transaction was rejected They are not same amount, Transaction ID : ${this.transaction.id}`);
+            this.logger.error(`Transaction was rejected They are not same amount, Transaction ID : ${transaction.id}`);
             await this.transactionStatsService.create(getStatusLinkTransactionStatDto);
             throw new BadRequestException('Transaction was rejected ');
         }
+
+        const existTransaction = await this.transactionService.checkExternalTrackNumber(data.data.transactionId)
+        if (existTransaction) {
+            // Store Status Link Transaction Stats
+            const getStatusLinkTransactionStatDto = new CreateTransactionStatsDto({
+                status: TransactionStatus.PROCESSING_FAILED,
+                transaction: transaction
+            });
+            await this.transactionStatsService.create(getStatusLinkTransactionStatDto);
+            this.logger.error(`Transaction was rejected it was exist transaction, Transaction ID : ${transaction.id}`);
+            throw new BadRequestException('Transaction was rejected ');
+        }
+
+        // Store Status Link Transaction Stats
+        const getStatusLinkTransactionStatDto = new CreateTransactionStatsDto({
+            status: TransactionStatus.AUTHENTICATION_APPROVED,
+            transaction: transaction
+        });
+        await this.transactionStatsService.create(getStatusLinkTransactionStatDto);
 
         return data
     }

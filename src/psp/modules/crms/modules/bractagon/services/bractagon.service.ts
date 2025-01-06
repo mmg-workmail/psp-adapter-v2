@@ -12,6 +12,15 @@ import { BractagonResponseGeneratePaymentLink } from '../interfaces/bractagon-re
 
 import { TcPayGateway } from 'src/psp/modules/payment-methods/modules/tc-pay/services/tc-pay.gateway';
 import { GatewayType } from 'src/psp/modules/payment-methods/enums/gateway-type';
+import { TcpayCallbackTransactionDto } from 'src/psp/modules/payment-methods/modules/tc-pay/dto/tcpay-callback-transaction.dto copy';
+import { Signature } from 'src/shared/classes/signature/signature';
+import { Transaction } from 'src/psp/modules/transaction/entities/transaction.entity';
+import { Merchant } from 'src/psp/modules/merchant/entities/merchant.entity';
+import { Gateway } from 'src/psp/modules/gateways/entities/gateway.entity';
+import { BractagonCallbackTransactionDto } from '../dto/bractagon-callback-transaction.dto';
+import { firstValueFrom } from 'rxjs';
+import { HttpService } from '@nestjs/axios';
+import { TcPayEncodedConfig } from 'src/psp/modules/payment-methods/modules/tc-pay/interfaces';
 
 @Injectable()
 export class BractagonService {
@@ -24,7 +33,9 @@ export class BractagonService {
         private readonly merchantService: MerchantService,
         private readonly gatewaysService: GatewaysService,
 
-        private readonly tcPayGateway: TcPayGateway
+        private readonly tcPayGateway: TcPayGateway,
+
+        private readonly httpService: HttpService,
     ) { }
 
     async openPayment(bractagonOpenTransactionDto: BractagonOpenTransactionDto): Promise<BractagonResponseGeneratePaymentLink> {
@@ -81,7 +92,7 @@ export class BractagonService {
         this.logger.log(`The gateway type is ${gatewayType}`);
 
         // Payment Provider
-        const paymentProvider = this.processPayment(gatewayType);
+        const paymentProvider = this.processPaymentProvider(gatewayType);
 
         // Store Sent Transaction Stats
         const sentTransactionStatDto = new CreateTransactionStatsDto({
@@ -107,7 +118,21 @@ export class BractagonService {
         return bractagonResponseGeneratePaymentLink;
     }
 
-    processPayment(gatewayType: GatewayType) {
+    async callbackPayment(tcpayCallbackTransactionDto: TcpayCallbackTransactionDto) {
+
+        const transaction = await this.transactionService.checkExternalOrderId(tcpayCallbackTransactionDto['data.Token']);
+        const merchant = transaction.merchant;
+
+        await this.sendCallbackPayment(transaction, merchant);
+
+        const gateway = await this.gatewaysService.findOneByMerchantId(merchant.merchantId);
+        const config = gateway.encodedConfig as TcPayEncodedConfig;
+
+        return { url: 'https://www.another-example.com', statusCode: 301 };
+
+    }
+
+    processPaymentProvider(gatewayType: GatewayType) {
 
         switch (gatewayType) {
             case GatewayType.TC_PAY:
@@ -118,4 +143,56 @@ export class BractagonService {
                 break;
         }
     }
+
+    async sendCallbackPayment(transaction: Transaction, merchant: Merchant) {
+
+        const body: BractagonCallbackTransactionDto = {
+            merchant_id: merchant.merchantId,
+            order_no: transaction.orderId,
+            transaction_id: transaction.externalTrackNumber,
+            amount: transaction.actualDepositAmount,
+            currency: transaction.currency,
+            time: +new Date(),
+            status: 1,
+        };
+
+        // Generate Sign
+        const sign = new Signature(merchant.token);
+        body.sign = sign.generateSignature(body);
+
+        const headers = {
+            'crm-pay-token': merchant.token,
+        };
+
+
+        const eplanetUrlCallback = 'https://crm-user-api.broctagon.com/pay/callback';
+
+        try {
+
+            await firstValueFrom(
+                this.httpService.post(eplanetUrlCallback, body, { headers })
+            );
+
+            const TransactionStatDto = new CreateTransactionStatsDto({
+                status: TransactionStatus.SUCCESS,
+                transaction: transaction
+            });
+            await this.transactionStatsService.create(TransactionStatDto);
+
+        } catch (error) {
+
+            const TransactionStatDto = new CreateTransactionStatsDto({
+                status: TransactionStatus.ERROR,
+                transaction: transaction
+            });
+
+            await this.transactionStatsService.create(TransactionStatDto);
+            this.logger.error(`Transaction was accured, Transaction ID : ${transaction.id}, with : ${error}`);
+            throw new BadRequestException('Transaction was accured an error ');
+
+        }
+
+
+    }
+
 }

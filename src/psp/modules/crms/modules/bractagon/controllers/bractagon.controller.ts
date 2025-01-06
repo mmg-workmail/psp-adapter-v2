@@ -1,10 +1,11 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, UseFilters, UseGuards } from '@nestjs/common';
 import { BractagonOpenTransactionDto } from 'src/psp/modules/crms/modules/bractagon/dto/bractagon-open-transaction.dto';
 import { BractagonGuard } from 'src/psp/modules/crms/modules/bractagon/guards/bractagon.guard';
 import { BractagonResponseGeneratePaymentLink } from 'src/psp/modules/crms/modules/bractagon/interfaces/bractagon-response-generate-payment-link.interface';
 import { BractagonService } from 'src/psp/modules/crms/modules/bractagon/services/bractagon.service';
 import { TcpayCallbackTransactionDto } from 'src/psp/modules/payment-methods/modules/tc-pay/dto/tcpay-callback-transaction.dto copy';
 import { TcpayCallbackGuard } from 'src/psp/modules/payment-methods/modules/tc-pay/guards/tcpay-callback.guard';
+import { NotFoundRedirectFilter } from 'src/shared/filters/exception-filter';
 
 @Controller('api/bractagon/transactions')
 export class BractagonController {
@@ -18,9 +19,10 @@ export class BractagonController {
     }
 
     @Post('tc-pay/callback')
+    @UseFilters(NotFoundRedirectFilter)
     @UseGuards(TcpayCallbackGuard)
-    callback(@Body() tcpayCallbackTransactionDto: TcpayCallbackTransactionDto): Promise<BractagonResponseGeneratePaymentLink> | boolean {
-        return true
+    callback(@Body() tcpayCallbackTransactionDto: TcpayCallbackTransactionDto) {
+        return this.bractagonService.callbackPayment(tcpayCallbackTransactionDto)
     }
 
 }

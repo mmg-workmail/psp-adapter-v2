@@ -74,6 +74,14 @@ export class TcPayGateway extends AbstractPaymentGateway {
         });
         await this.transactionStatsService.create(getOpenTransactionStatDto);
 
+
+        // Store Status Link Transaction Stats
+        const getPendingTransactionStatDto = new CreateTransactionStatsDto({
+            status: TransactionStatus.PENDING,
+            transaction: this.transaction
+        });
+        await this.transactionStatsService.create(getPendingTransactionStatDto);
+
         return {
             url: `${config.generateLinkPayment}?url=${config.baseUrl}&token=${token}`
         }
