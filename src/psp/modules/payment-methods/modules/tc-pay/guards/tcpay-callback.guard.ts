@@ -41,6 +41,7 @@ export class TcpayCallbackGuard implements CanActivate {
         const payload = plainToInstance(TcpayCallbackTransactionDto, request.body);
 
         const resCode = parseInt(payload.resCode);
+        this.logger.log('payload', JSON.stringify(payload));
 
         const transaction = await this.transactionService.checkExternalOrderId(payload['data.Token']);
         if (!transaction) {
