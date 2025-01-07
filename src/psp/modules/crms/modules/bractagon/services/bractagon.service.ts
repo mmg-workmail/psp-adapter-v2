@@ -100,11 +100,7 @@ export class BractagonService {
         });
         const sentTransactionStats = await this.transactionStatsService.create(sentTransactionStatDto);
 
-        const result = await paymentProvider
-            .setGateway(gateway)
-            .setTransaction(transaction)
-            .setTransactionStats(sentTransactionStats)
-            .generatePaymentLink();
+        const result = await paymentProvider.generatePaymentLink(transaction, gateway);
 
         const bractagonResponseGeneratePaymentLink: BractagonResponseGeneratePaymentLink = {
             data: {

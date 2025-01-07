@@ -16,6 +16,8 @@ import { firstValueFrom } from 'rxjs';
 import { Action, ResponseGeneratePaymentLink, TcPayEncodedConfig } from 'src/psp/modules/payment-methods/modules/tc-pay/interfaces';
 import { AbstractPaymentGateway } from 'src/psp/modules/payment-methods/abstracts/method-service/payment-gateway.abstract';
 import { Price } from 'src/shared/classes/price/price';
+import { Transaction } from 'src/psp/modules/transaction/entities/transaction.entity';
+import { Gateway } from 'src/psp/modules/gateways/entities/gateway.entity';
 
 
 
@@ -31,46 +33,46 @@ export class TcPayGateway extends AbstractPaymentGateway {
         this.gatewayType = GatewayType.TC_PAY;
     }
 
-    async generatePaymentLink(): Promise<ResponseGeneratePaymentLink> {
+    async generatePaymentLink(transaction: Transaction, gateway: Gateway): Promise<ResponseGeneratePaymentLink> {
 
         // Store Get Link Transaction Stats
         const getLinkTransactionStatDto = new CreateTransactionStatsDto({
             status: TransactionStatus.GET_LINK,
-            transaction: this.transaction
+            transaction: transaction
         });
         await this.transactionStatsService.create(getLinkTransactionStatDto);
 
-        const { url } = await this.createIpg();
+        const { url } = await this.createIpg(transaction, gateway);
         return {
             url: url
         }
     }
 
-    async createIpg() {
+    async createIpg(transaction: Transaction, gateway: Gateway) {
 
-        const config = this.gateway.encodedConfig as TcPayEncodedConfig;
+        const config = gateway.encodedConfig as TcPayEncodedConfig;
 
         const payload = {
             MerchantId: parseInt(config.merchantId),
             TerminalId: parseInt(config.terminalId),
             Action: Action.DEPOSIT,
-            Amount: Price.formatToTwoDecimalPlaces(this.transaction.amount),
-            InvoiceNumber: this.transaction.id,
-            LocalDateTime: this.formatDateToCustomFormat(this.transaction.createdAt),
+            Amount: Price.formatToTwoDecimalPlaces(transaction.amount),
+            InvoiceNumber: transaction.id,
+            LocalDateTime: this.formatDateToCustomFormat(transaction.createdAt),
             ReturnUrl: config.returnUrl,
             AdditionalData: 'test',
-            ConsumerId: this.transaction.userId,
+            ConsumerId: transaction.userId,
         };
 
-        const token = await this.generateToken(payload, config);
+        const token = await this.generateToken(payload, transaction, gateway);
 
-        this.transaction.externalOrderId = token;
-        this.transactionService.create(this.transaction);
+        transaction.externalOrderId = token;
+        this.transactionService.create(transaction);
 
         // Store Status Link Transaction Stats
         const getOpenTransactionStatDto = new CreateTransactionStatsDto({
             status: TransactionStatus.OPENED,
-            transaction: this.transaction
+            transaction: transaction
         });
         await this.transactionStatsService.create(getOpenTransactionStatDto);
 
@@ -78,7 +80,7 @@ export class TcPayGateway extends AbstractPaymentGateway {
         // Store Status Link Transaction Stats
         const getPendingTransactionStatDto = new CreateTransactionStatsDto({
             status: TransactionStatus.PENDING,
-            transaction: this.transaction
+            transaction: transaction
         });
         await this.transactionStatsService.create(getPendingTransactionStatDto);
 
@@ -87,7 +89,10 @@ export class TcPayGateway extends AbstractPaymentGateway {
         }
     }
 
-    async generateToken(payload: {}, config: TcPayEncodedConfig) {
+    async generateToken(payload: {}, transaction: Transaction, gateway: Gateway) {
+
+        const config = gateway.encodedConfig as TcPayEncodedConfig;
+
         const params = {
             ...payload,
             private_key: config.privateKeyXml,
@@ -102,7 +107,7 @@ export class TcPayGateway extends AbstractPaymentGateway {
             // Store Status Link Transaction Stats
             const getStatusLinkTransactionStatDto = new CreateTransactionStatsDto({
                 status: TransactionStatus.GET_LINK_ERROR,
-                transaction: this.transaction
+                transaction: transaction
             });
 
             await this.transactionStatsService.create(getStatusLinkTransactionStatDto);
@@ -111,7 +116,7 @@ export class TcPayGateway extends AbstractPaymentGateway {
             // Store Status Link Transaction Stats
             const getStatusLinkTransactionStatDto = new CreateTransactionStatsDto({
                 status: TransactionStatus.GET_LINK_SUCCESS,
-                transaction: this.transaction
+                transaction: transaction
             });
             await this.transactionStatsService.create(getStatusLinkTransactionStatDto);
         }
