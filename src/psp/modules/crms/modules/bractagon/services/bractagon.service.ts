@@ -34,7 +34,6 @@ export class BractagonService {
         private readonly gatewaysService: GatewaysService,
 
         private readonly tcPayGateway: TcPayGateway,
-
         private readonly httpService: HttpService,
     ) { }
 

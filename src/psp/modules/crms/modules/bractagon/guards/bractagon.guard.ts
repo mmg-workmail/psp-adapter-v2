@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { Signature } from 'src/shared/classes/signature/signature';
 
 
@@ -8,6 +8,8 @@ import { BractagonOpenTransactionDto } from 'src/psp/modules/crms/modules/bracta
 
 @Injectable()
 export class BractagonGuard implements CanActivate {
+
+  private readonly logger = new Logger(BractagonGuard.name, { timestamp: true });
 
   constructor(private readonly merchantService: MerchantService) { }
 
@@ -23,6 +25,7 @@ export class BractagonGuard implements CanActivate {
     const merchant = await this.merchantService.findOneByMerchantId(payload.merchant_id);
 
     if (!merchant) {
+      this.logger.log('Merchant not found', payload.merchant_id);
       throw new UnauthorizedException('Merchant not found');
     }
 
@@ -32,7 +35,10 @@ export class BractagonGuard implements CanActivate {
     const signature = payload.sign
     delete payload.sign;
 
+
+
     if (!sign.isValid(payload, signature)) {
+      this.logger.log('Invalid signature', payload);
       throw new UnauthorizedException('Invalid signature');
     }
     return true;

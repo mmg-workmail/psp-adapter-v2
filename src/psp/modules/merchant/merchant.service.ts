@@ -56,7 +56,7 @@ export class MerchantService {
   }
 
   findOneByMerchantId(merchantId: string) {
-    this.logger.log('The item was found by MerchantId', merchantId);
+    // this.logger.log('The item was found by MerchantId', merchantId);
     return this.merchantRepository.findOne({ where: { merchantId: merchantId } });
   }
 
