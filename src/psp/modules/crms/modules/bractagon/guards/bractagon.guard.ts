@@ -25,7 +25,7 @@ export class BractagonGuard implements CanActivate {
     const merchant = await this.merchantService.findOneByMerchantId(payload.merchant_id);
 
     if (!merchant) {
-      this.logger.log('Merchant not found', payload.merchant_id);
+      this.logger.error('Merchant not found', payload.merchant_id);
       throw new UnauthorizedException('Merchant not found');
     }
 
@@ -36,9 +36,9 @@ export class BractagonGuard implements CanActivate {
     delete payload.sign;
 
 
-
+    console.log(sign.isValid(payload, signature), payload)
     if (!sign.isValid(payload, signature)) {
-      this.logger.log('Invalid signature', payload);
+      this.logger.error('Invalid signature', payload);
       throw new UnauthorizedException('Invalid signature');
     }
     return true;
