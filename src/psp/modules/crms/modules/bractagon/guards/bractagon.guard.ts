@@ -5,8 +5,6 @@ import { Signature } from 'src/shared/classes/signature/signature';
 import { plainToInstance } from 'class-transformer';
 import { MerchantService } from 'src/psp/modules/merchant/merchant.service';
 import { BractagonOpenTransactionDto } from 'src/psp/modules/crms/modules/bractagon/dto/bractagon-open-transaction.dto';
-import { stringify } from 'querystring';
-import { json } from 'stream/consumers';
 
 @Injectable()
 export class BractagonGuard implements CanActivate {

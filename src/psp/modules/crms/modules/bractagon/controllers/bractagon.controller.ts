@@ -18,8 +18,8 @@ export class BractagonController {
         return this.bractagonService.openPayment(bractagonOpenTransactionDto);
     }
 
+    // @UseFilters(NotFoundRedirectFilter)
     @Post('tc-pay/callback')
-    @UseFilters(NotFoundRedirectFilter)
     @UseGuards(TcpayCallbackGuard)
     callback(@Body() tcpayCallbackTransactionDto: TcpayCallbackTransactionDto) {
         return this.bractagonService.callbackPayment(tcpayCallbackTransactionDto)

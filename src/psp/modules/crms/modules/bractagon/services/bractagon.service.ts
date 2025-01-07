@@ -32,9 +32,9 @@ export class BractagonService {
         private readonly transactionStatsService: TransactionStatsService,
         private readonly merchantService: MerchantService,
         private readonly gatewaysService: GatewaysService,
+        private readonly httpService: HttpService,
 
         private readonly tcPayGateway: TcPayGateway,
-        private readonly httpService: HttpService,
     ) { }
 
     async openPayment(bractagonOpenTransactionDto: BractagonOpenTransactionDto): Promise<BractagonResponseGeneratePaymentLink> {
