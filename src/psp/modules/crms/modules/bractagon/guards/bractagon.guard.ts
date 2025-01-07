@@ -22,8 +22,6 @@ export class BractagonGuard implements CanActivate {
     // Transform the plain payload into a DTO instance
     const payload = plainToInstance(BractagonOpenTransactionDto, request.body);
 
-    console.log('hello')
-
     const merchant = await this.merchantService.findOneByMerchantId(payload.merchant_id);
 
     if (!merchant) {
@@ -37,13 +35,11 @@ export class BractagonGuard implements CanActivate {
     const signature = payload.sign
     delete payload.sign;
 
-
-    console.log(sign.isValid(payload, signature), payload)
-
-
     if (!sign.isValid(payload, signature)) {
       this.logger.error('Invalid signature', payload);
       throw new UnauthorizedException('Invalid signature');
+    } else {
+      this.logger.log('bractagon signature is valid');
     }
     return true;
   }
