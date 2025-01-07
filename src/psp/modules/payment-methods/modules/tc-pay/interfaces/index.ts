@@ -4,6 +4,7 @@ export interface TcPayEncodedConfig {
     paymentVerification: string,
     merchantId: string,
     terminalId: string,
+    approveUrl: string,
     returnUrl: string,
     generateSignUrl: string,
     generateSignVerify: string,

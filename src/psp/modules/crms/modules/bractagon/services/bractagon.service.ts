@@ -127,7 +127,7 @@ export class BractagonService {
         const gateway = await this.gatewaysService.findOneByMerchantId(merchant.merchantId);
         const config = gateway.encodedConfig as TcPayEncodedConfig;
 
-        return { url: 'https://www.another-example.com', statusCode: 301 };
+        return { url: config.approveUrl, statusCode: 301 };
 
     }
 
