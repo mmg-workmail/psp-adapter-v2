@@ -22,6 +22,8 @@ export class BractagonGuard implements CanActivate {
     // Transform the plain payload into a DTO instance
     const payload = plainToInstance(BractagonOpenTransactionDto, request.body);
 
+    this.logger.log("Payload : ", payload);
+
     const merchant = await this.merchantService.findOneByMerchantId(payload.merchant_id);
 
     if (!merchant) {
