@@ -5,6 +5,8 @@ import { Signature } from 'src/shared/classes/signature/signature';
 import { plainToInstance } from 'class-transformer';
 import { MerchantService } from 'src/psp/modules/merchant/merchant.service';
 import { BractagonOpenTransactionDto } from 'src/psp/modules/crms/modules/bractagon/dto/bractagon-open-transaction.dto';
+import { stringify } from 'querystring';
+import { json } from 'stream/consumers';
 
 @Injectable()
 export class BractagonGuard implements CanActivate {
@@ -22,7 +24,7 @@ export class BractagonGuard implements CanActivate {
     // Transform the plain payload into a DTO instance
     const payload = plainToInstance(BractagonOpenTransactionDto, request.body);
 
-    this.logger.log("Payload : ", payload);
+    this.logger.log("Payload : ", JSON.stringify(payload));
 
     const merchant = await this.merchantService.findOneByMerchantId(payload.merchant_id);
 
