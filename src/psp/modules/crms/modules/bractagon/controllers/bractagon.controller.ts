@@ -28,7 +28,6 @@ export class BractagonController {
     }
 
     @Post('tc-pay/callback-test')
-    // @UseGuards(TcpayCallbackGuard)
     async callbackTest(@Body() tcpayCallbackTransactionDto: TcpayCallbackTransactionDto, @Res() res: Response) {
         return { statusCode: 200 };
     }
