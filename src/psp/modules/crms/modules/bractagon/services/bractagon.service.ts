@@ -16,11 +16,9 @@ import { TcpayCallbackTransactionDto } from 'src/psp/modules/payment-methods/mod
 import { Signature } from 'src/shared/classes/signature/signature';
 import { Transaction } from 'src/psp/modules/transaction/entities/transaction.entity';
 import { Merchant } from 'src/psp/modules/merchant/entities/merchant.entity';
-import { Gateway } from 'src/psp/modules/gateways/entities/gateway.entity';
 import { BractagonCallbackTransactionDto } from '../dto/bractagon-callback-transaction.dto';
 import { firstValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
-import { TcPayEncodedConfig } from 'src/psp/modules/payment-methods/modules/tc-pay/interfaces';
 
 @Injectable()
 export class BractagonService {
@@ -120,10 +118,7 @@ export class BractagonService {
 
         await this.sendCallbackPayment(transaction, merchant);
 
-        const gateway = await this.gatewaysService.findOneByMerchantId(merchant.merchantId);
-        const config = gateway.encodedConfig as TcPayEncodedConfig;
-
-        return { url: config.approveUrl, statusCode: 301 };
+        return { statusCode: 200 };
 
     }
 

@@ -5,7 +5,7 @@ import { BractagonResponseGeneratePaymentLink } from 'src/psp/modules/crms/modul
 import { BractagonService } from 'src/psp/modules/crms/modules/bractagon/services/bractagon.service';
 import { TcpayCallbackTransactionDto } from 'src/psp/modules/payment-methods/modules/tc-pay/dto/tcpay-callback-transaction.dto copy';
 import { TcpayCallbackGuard } from 'src/psp/modules/payment-methods/modules/tc-pay/guards/tcpay-callback.guard';
-import { NotFoundRedirectFilter } from 'src/shared/filters/exception-filter';
+// import { NotFoundRedirectFilter } from 'src/shared/filters/exception-filter';
 import { Response } from 'express';
 
 @Controller('api/bractagon/transactions')
@@ -19,12 +19,12 @@ export class BractagonController {
         return this.bractagonService.openPayment(bractagonOpenTransactionDto);
     }
 
-    @UseFilters(NotFoundRedirectFilter)
+    // @UseFilters(NotFoundRedirectFilter)
     @Post('tc-pay/callback')
     @UseGuards(TcpayCallbackGuard)
     async callback(@Body() tcpayCallbackTransactionDto: TcpayCallbackTransactionDto, @Res() res: Response) {
         const result = await this.bractagonService.callbackPayment(tcpayCallbackTransactionDto);
-        return res.redirect(result.url)
+        return result
     }
 
 }

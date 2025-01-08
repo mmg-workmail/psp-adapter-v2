@@ -123,6 +123,7 @@ export class TcPayGateway extends AbstractPaymentGateway {
 
         return data.Token
     }
+
     formatDateToCustomFormat(dateString: Date): string {
         const date = new Date(dateString);
 
