@@ -15,11 +15,10 @@ export class BractagonController {
 
     @UseGuards(BractagonGuard)
     @Post('tc-pay/open/pay/url')
-    open(@Body() bractagonOpenTransactionDto: BractagonOpenTransactionDto): Promise<BractagonResponseGeneratePaymentLink> {
+    openTcPay(@Body() bractagonOpenTransactionDto: BractagonOpenTransactionDto): Promise<BractagonResponseGeneratePaymentLink> {
         return this.bractagonService.openPayment(bractagonOpenTransactionDto);
     }
 
-    // @UseFilters(NotFoundRedirectFilter)
     @Post('tc-pay/callback')
     @UseGuards(TcpayCallbackGuard)
     async callback(@Body() tcpayCallbackTransactionDto: TcpayCallbackTransactionDto, @Res() res: Response) {
@@ -27,9 +26,10 @@ export class BractagonController {
         return result
     }
 
-    @Post('tc-pay/callback-test')
-    async callbackTest(@Body() tcpayCallbackTransactionDto: TcpayCallbackTransactionDto) {
-        return { test: true };
+    @UseGuards(BractagonGuard)
+    @Post('coin-buy/open/pay/url')
+    openCoinBuy(@Body() bractagonOpenTransactionDto: BractagonOpenTransactionDto): Promise<BractagonResponseGeneratePaymentLink> {
+        return this.bractagonService.openPayment(bractagonOpenTransactionDto);
     }
 
 }

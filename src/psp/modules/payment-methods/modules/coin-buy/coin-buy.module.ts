@@ -1,20 +1,19 @@
 import { Module } from '@nestjs/common';
+import { CoinBuyService } from './services/coin-buy/coin-buy.service';
 
-import { SharedModule } from 'src/shared/shared.module';
 import { HttpModule } from '@nestjs/axios';
 
 import { GatewaysModule } from 'src/psp/modules/gateways/gateways.module';
 import { MerchantModule } from 'src/psp/modules/merchant/merchant.module';
 import { TransactionModule } from 'src/psp/modules/transaction/transaction.module';
-
-import { TcPayGateway } from './services/tc-pay.gateway';
-
-
+import { SharedModule } from 'src/shared/shared.module';
 
 @Module({
-    imports: [SharedModule, HttpModule, GatewaysModule, MerchantModule, TransactionModule],
-    controllers: [],
-    providers: [TcPayGateway],
-    exports: [TcPayGateway]
+  imports: [
+    GatewaysModule, MerchantModule, TransactionModule,
+    HttpModule, SharedModule
+  ],
+  providers: [CoinBuyService],
+  exports: [CoinBuyService]
 })
-export class TcPayModule { }
+export class CoinBuyModule { }

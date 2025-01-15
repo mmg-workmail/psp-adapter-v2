@@ -19,6 +19,7 @@ import { Merchant } from 'src/psp/modules/merchant/entities/merchant.entity';
 import { BractagonCallbackTransactionDto } from '../dto/bractagon-callback-transaction.dto';
 import { firstValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
+import { CoinBuyService } from 'src/psp/modules/payment-methods/modules/coin-buy/services/coin-buy/coin-buy.service';
 
 @Injectable()
 export class BractagonService {
@@ -33,6 +34,7 @@ export class BractagonService {
         private readonly httpService: HttpService,
 
         private readonly tcPayGateway: TcPayGateway,
+        private readonly coinBuyService: CoinBuyService,
     ) { }
 
     async openPayment(bractagonOpenTransactionDto: BractagonOpenTransactionDto): Promise<BractagonResponseGeneratePaymentLink> {
@@ -96,7 +98,8 @@ export class BractagonService {
             status: TransactionStatus.SENT,
             transaction: transaction
         });
-        const sentTransactionStats = await this.transactionStatsService.create(sentTransactionStatDto);
+
+        await this.transactionStatsService.create(sentTransactionStatDto);
 
         const result = await paymentProvider.generatePaymentLink(transaction, gateway);
 
@@ -127,6 +130,9 @@ export class BractagonService {
         switch (gatewayType) {
             case GatewayType.TC_PAY:
                 return this.tcPayGateway;
+                break;
+            case GatewayType.COIN_BUY:
+                return this.coinBuyService;
                 break;
             default:
                 return this.tcPayGateway;

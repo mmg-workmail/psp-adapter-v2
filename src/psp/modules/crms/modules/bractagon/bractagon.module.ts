@@ -9,10 +9,15 @@ import { TcPayModule } from 'src/psp/modules/payment-methods/modules/tc-pay/tcp-
 import { BractagonController } from './controllers/bractagon.controller';
 import { BractagonService } from './services/bractagon.service';
 import { HttpModule } from '@nestjs/axios';
+import { CoinBuyModule } from 'src/psp/modules/payment-methods/modules/coin-buy/coin-buy.module';
 
 
 @Module({
-    imports: [HttpModule, GatewaysModule, MerchantModule, TransactionModule, TcPayModule],
+    imports: [
+        HttpModule,
+        GatewaysModule, MerchantModule, TransactionModule,
+        TcPayModule, CoinBuyModule
+    ],
     controllers: [BractagonController],
     providers: [BractagonService],
     exports: [BractagonService]
