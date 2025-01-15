@@ -1,5 +1,5 @@
 
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 
 import { GatewayType } from 'src/psp/modules/payment-methods/enums/gateway-type';
 
@@ -23,6 +23,8 @@ import { Gateway } from 'src/psp/modules/gateways/entities/gateway.entity';
 
 @Injectable()
 export class TcPayGateway extends AbstractPaymentGateway {
+
+    private readonly logger = new Logger(TcPayGateway.name, { timestamp: true });
 
     constructor(
         private readonly transactionService: TransactionService,
@@ -111,7 +113,10 @@ export class TcPayGateway extends AbstractPaymentGateway {
             });
 
             await this.transactionStatsService.create(getStatusLinkTransactionStatDto);
-            throw new BadRequestException('Create IPG is accured an error', data.responseDescription);
+
+            const message = `Create IPG is accured an error "${data.responseDescription}"`;
+            this.logger.error(message);
+            throw new BadRequestException(message);
         } else {
             // Store Status Link Transaction Stats
             const getStatusLinkTransactionStatDto = new CreateTransactionStatsDto({
