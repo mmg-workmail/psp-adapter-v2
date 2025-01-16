@@ -179,7 +179,7 @@ export class CoinBuyService extends AbstractPaymentGateway implements OnModuleIn
             }
         }
 
-        const { data, status } = await firstValueFrom(
+        const { data, status, statusText } = await firstValueFrom(
             this.httpService.post<ResponseCoinBuy<ResponseCoinBuyDeposit, ResponseCoinBuyRelationships>>(url, payload)
         );
         if (status < 200 || status >= 300) {
@@ -195,6 +195,7 @@ export class CoinBuyService extends AbstractPaymentGateway implements OnModuleIn
             await this.transactionStatsService.create(getLinkTransactionStatDto);
             const message = `Loggin has accured, Response code is : ${status}`
 
+            this.logger.error(statusText);
             this.logger.error(message);
             throw new BadRequestException(message);
         }
