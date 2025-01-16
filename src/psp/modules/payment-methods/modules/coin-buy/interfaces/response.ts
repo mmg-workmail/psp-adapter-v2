@@ -55,7 +55,7 @@ export interface ResponseCoinBuyRelationships {
     currency: { data: null },
     wallet: {
         data: {
-            type: TypeCoinBuy.wallet,
+            type: TypeCoinBuy.WALLET,
             id: number
         }
     }

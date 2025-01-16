@@ -8,7 +8,7 @@ import { TransactionStatsService } from 'src/psp/modules/transaction/services/tr
 import { GatewaysService } from 'src/psp/modules/gateways/gateways.service';
 
 import { TcpayVerificationTransactionDto } from 'src/psp/modules/payment-methods/modules/tc-pay/dto/tcpay-verification-transaction.dto';
-import { TcpayCallbackTransactionDto } from 'src/psp/modules/payment-methods/modules/tc-pay/dto/tcpay-callback-transaction.dto copy';
+import { TcpayCallbackTransactionDto } from 'src/psp/modules/payment-methods/modules/tc-pay/dto/tcpay-callback-transaction.dto';
 import { TransactionStatus } from 'src/psp/enums/TransactionStatus';
 import { CreateTransactionStatsDto } from 'src/psp/modules/transaction/dto/create-transaction-stats.dto';
 import { TcPayEncodedConfig } from '../interfaces';

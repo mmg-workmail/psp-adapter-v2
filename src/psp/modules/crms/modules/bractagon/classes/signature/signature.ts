@@ -1,6 +1,6 @@
 import * as crypto from 'crypto-js';
 
-export class Signature {
+export class SignatureForBractagon {
 
     private readonly secretKey: string;
 

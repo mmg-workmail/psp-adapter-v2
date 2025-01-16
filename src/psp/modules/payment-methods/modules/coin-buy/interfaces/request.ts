@@ -26,7 +26,7 @@ export interface RequestCoinBuyDeposit {
 export interface RequestCoinBuyRelationships {
     wallet: {
         data: {
-            type: TypeCoinBuy.wallet,
+            type: TypeCoinBuy.WALLET,
             id: string
         }
     }

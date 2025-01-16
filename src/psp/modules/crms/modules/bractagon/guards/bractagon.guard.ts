@@ -1,5 +1,5 @@
 import { CanActivate, ExecutionContext, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
-import { Signature } from 'src/shared/classes/signature/signature';
+import { SignatureForBractagon } from 'src/psp/modules/crms/modules/bractagon/classes/signature/signature';
 
 
 import { plainToInstance } from 'class-transformer';
@@ -31,7 +31,7 @@ export class BractagonGuard implements CanActivate {
       throw new UnauthorizedException('Merchant not found');
     }
 
-    const sign = new Signature(merchant.token);
+    const sign = new SignatureForBractagon(merchant.token);
 
     // Validate the signature
     const signature = payload.sign

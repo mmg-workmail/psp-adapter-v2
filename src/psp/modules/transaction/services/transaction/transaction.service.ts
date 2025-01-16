@@ -19,7 +19,7 @@ export class TransactionService {
     }
 
     checkExternalTrackNumber(externalTrackNumber: string) {
-        return this.transactionRepository.findOne({ where: { externalTrackNumber } });
+        return this.transactionRepository.findOne({ where: { externalTrackNumber }, relations: ['merchant'] });
     }
 
     create(createTransactionDto: CreateTransactionDto) {

@@ -166,7 +166,7 @@ export class CoinBuyService extends AbstractPaymentGateway implements OnModuleIn
                 relationships: {
                     wallet: {
                         data: {
-                            type: TypeCoinBuy.wallet,
+                            type: TypeCoinBuy.WALLET,
                             id: this.config.walletId,
                         }
                     }

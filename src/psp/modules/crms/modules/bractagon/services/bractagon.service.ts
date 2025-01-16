@@ -12,8 +12,8 @@ import { BractagonResponseGeneratePaymentLink } from '../interfaces/bractagon-re
 
 import { TcPayGateway } from 'src/psp/modules/payment-methods/modules/tc-pay/services/tc-pay.gateway';
 import { GatewayType } from 'src/psp/modules/payment-methods/enums/gateway-type';
-import { TcpayCallbackTransactionDto } from 'src/psp/modules/payment-methods/modules/tc-pay/dto/tcpay-callback-transaction.dto copy';
-import { Signature } from 'src/shared/classes/signature/signature';
+import { TcpayCallbackTransactionDto } from 'src/psp/modules/payment-methods/modules/tc-pay/dto/tcpay-callback-transaction.dto';
+import { SignatureForBractagon } from 'src/psp/modules/crms/modules/bractagon/classes/signature/signature';
 import { Transaction } from 'src/psp/modules/transaction/entities/transaction.entity';
 import { Merchant } from 'src/psp/modules/merchant/entities/merchant.entity';
 import { BractagonCallbackTransactionDto } from '../dto/bractagon-callback-transaction.dto';
@@ -103,6 +103,21 @@ export class BractagonService {
 
         const result = await paymentProvider.generatePaymentLink(transaction, gateway);
 
+        // Store Status Link Transaction Stats
+        const getOpenTransactionStatDto = new CreateTransactionStatsDto({
+            status: TransactionStatus.OPENED,
+            transaction: transaction
+        });
+        await this.transactionStatsService.create(getOpenTransactionStatDto);
+
+
+        // Store Status Link Transaction Stats
+        const getPendingTransactionStatDto = new CreateTransactionStatsDto({
+            status: TransactionStatus.PENDING,
+            transaction: transaction
+        });
+        await this.transactionStatsService.create(getPendingTransactionStatDto);
+
         const bractagonResponseGeneratePaymentLink: BractagonResponseGeneratePaymentLink = {
             data: {
                 url: result.url
@@ -114,12 +129,12 @@ export class BractagonService {
         return bractagonResponseGeneratePaymentLink;
     }
 
-    async callbackPayment(tcpayCallbackTransactionDto: TcpayCallbackTransactionDto) {
+    async callbackPayment(tcpayCallbackTransactionDto: TcpayCallbackTransactionDto | any) {
 
-        const transaction = await this.transactionService.checkExternalOrderId(tcpayCallbackTransactionDto['data.Token']);
-        const merchant = transaction.merchant;
+        // const transaction = await this.transactionService.checkExternalOrderId(tcpayCallbackTransactionDto['data.Token']);
+        // const merchant = transaction.merchant;
 
-        await this.sendCallbackPayment(transaction, merchant);
+        // await this.sendCallbackPayment(transaction, merchant);
 
         return { statusCode: 200 };
 
@@ -153,7 +168,7 @@ export class BractagonService {
         };
 
         // Generate Sign
-        const sign = new Signature(merchant.token);
+        const sign = new SignatureForBractagon(merchant.token);
         body.sign = sign.generateSignature(body);
 
         const headers = {

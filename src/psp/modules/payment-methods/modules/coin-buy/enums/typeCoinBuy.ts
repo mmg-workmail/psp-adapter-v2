@@ -1,5 +1,7 @@
 export enum TypeCoinBuy {
     AUTH_TOKEN = 'auth-token',
     DEPOSIT = 'deposit',
-    wallet = 'wallet',
+    WALLET = 'wallet',
+    TRANSFER = 'transfer',
+    CURRENCY = 'currency',
 }
