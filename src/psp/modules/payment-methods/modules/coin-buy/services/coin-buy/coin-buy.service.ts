@@ -108,31 +108,39 @@ export class CoinBuyService extends AbstractPaymentGateway implements OnModuleIn
 
         this.logger.log('Refresh Auth Token', JSON.stringify(payload), JSON.stringify(url));
 
-        const { data, status } = await firstValueFrom(
-            this.httpService.post<ResponseCoinBuy<ResponseCoinBuyRefreshToken>>(url, payload)
-        );
+        try {
+            const { data, status } = await firstValueFrom(
+                this.httpService.post<ResponseCoinBuy<ResponseCoinBuyRefreshToken>>(url, payload)
+            );
 
-        if (status === HttpStatus.OK) {
-            this.authCredentials = {
-                token: data.data.attributes.access,
-                refresh: data.data.attributes.refresh,
-                access_expired_at: data.data.attributes.access_expired_at,
-                refresh_expired_at: data.data.attributes.refresh_expired_at,
+            if (status === HttpStatus.OK) {
+                this.authCredentials = {
+                    token: data.data.attributes.access,
+                    refresh: data.data.attributes.refresh,
+                    access_expired_at: data.data.attributes.access_expired_at,
+                    refresh_expired_at: data.data.attributes.refresh_expired_at,
+                };
+                this.setToken();
+            } else {
+                const message = `Refresh token error occurred, Response code is: ${status}`;
+                this.logger.error(message);
+                throw new BadRequestException(message);
             }
-            this.setToken();
-        } else {
-            const message = `Refresh token has accured, Response code is : ${status}`
-            this.logger.error(message);
-            throw new BadRequestException(message);
+        } catch (error) {
+            this.authCredentials = null;
+            this.logger.error('Error during refresh token process', error);
+            throw new BadRequestException('Error during refresh token process');
         }
+
     }
     private isAccessExpired() {
         const currentTime = new Date();
         const expirationTime = new Date(this.authCredentials.access_expired_at);
         const result = currentTime > expirationTime;
 
-        this.logger.warn('Access Token Is Expired');
-
+        if (result) {
+            this.logger.warn('Access Token Is Expired');
+        }
         return result;
     }
     private isRefreshExpired() {
@@ -140,8 +148,9 @@ export class CoinBuyService extends AbstractPaymentGateway implements OnModuleIn
         const expirationTime = new Date(this.authCredentials.refresh_expired_at);
         const result = currentTime > expirationTime;
 
-        this.logger.warn('Refresh Token Is Expired');
-
+        if (result) {
+            this.logger.warn('Refresh Token Is Expired');
+        }
         return result;
     }
     private async checkAuthenticated(): Promise<boolean> {
