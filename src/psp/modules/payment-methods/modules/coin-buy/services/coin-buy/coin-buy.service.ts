@@ -163,7 +163,7 @@ export class CoinBuyService extends AbstractPaymentGateway implements OnModuleIn
                 attributes: {
                     label: 'ePlanet Deposit',
                     tracking_id: transaction.externalTrackNumber,
-                    confirmations_needed: 3,
+                    confirmations_needed: 1,
                     callback_url: this.config.callbackUrl,
                     payment_page_redirect_url: this.config.paymentPageRedirectUrl,
                     payment_page_button_text: this.config.paymentPageButtonText
