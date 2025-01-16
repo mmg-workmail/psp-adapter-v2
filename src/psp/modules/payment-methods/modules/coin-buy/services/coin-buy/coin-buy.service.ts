@@ -55,6 +55,9 @@ export class CoinBuyService extends AbstractPaymentGateway implements OnModuleIn
             this.httpService.axiosRef.defaults.headers.common['Authorization'] = `Bearer ${this.authCredentials.token}`
         }
     }
+    private remoteAuth() {
+        this.authCredentials = undefined;
+    }
     private async removeToken() {
         delete this.httpService.axiosRef.defaults.headers.common['Authorization'];
     }
@@ -70,6 +73,8 @@ export class CoinBuyService extends AbstractPaymentGateway implements OnModuleIn
                 }
             }
         }
+
+        this.logger.log('loggin', JSON.stringify(payload), JSON.stringify(url));
 
         const { data, status } = await firstValueFrom(
             this.httpService.post<ResponseCoinBuy<ResponseCoinBuyToken>>(url, payload)
@@ -100,6 +105,8 @@ export class CoinBuyService extends AbstractPaymentGateway implements OnModuleIn
                 }
             }
         }
+
+        this.logger.log('Refresh Auth Token', JSON.stringify(payload), JSON.stringify(url));
 
         const { data, status } = await firstValueFrom(
             this.httpService.post<ResponseCoinBuy<ResponseCoinBuyRefreshToken>>(url, payload)
@@ -163,7 +170,7 @@ export class CoinBuyService extends AbstractPaymentGateway implements OnModuleIn
                 attributes: {
                     label: 'ePlanet Deposit',
                     tracking_id: transaction.externalTrackNumber,
-                    confirmations_needed: 1,
+                    confirmations_needed: 2,
                     callback_url: this.config.callbackUrl,
                     payment_page_redirect_url: this.config.paymentPageRedirectUrl,
                     payment_page_button_text: this.config.paymentPageButtonText
@@ -178,6 +185,8 @@ export class CoinBuyService extends AbstractPaymentGateway implements OnModuleIn
                 }
             }
         }
+
+        this.logger.log('create deposit', JSON.stringify(payload), JSON.stringify(url));
 
         const { data, status, statusText } = await firstValueFrom(
             this.httpService.post<ResponseCoinBuy<ResponseCoinBuyDeposit, ResponseCoinBuyRelationships>>(url, payload)
