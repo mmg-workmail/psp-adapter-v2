@@ -8,4 +8,9 @@ export class GenerateCodeService {
         const timestamp = Date.now().toString(); // Current timestamp
         return `${uuid}-${timestamp}`;
     }
+    generateNumericCode(length: number = 12): string {
+        const timestamp = Date.now().toString(); // Current timestamp
+        const randomPart = Array.from({ length }, () => Math.floor(Math.random() * 10)).join('');
+        return `${timestamp}${randomPart}`.slice(0, length);
+    }
 }

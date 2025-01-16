@@ -1,14 +1,14 @@
-import { Body, Controller, Post, Res, UseFilters, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, Req, Res, UseFilters, UseGuards } from '@nestjs/common';
 import { BractagonOpenTransactionDto } from 'src/psp/modules/crms/modules/bractagon/dto/bractagon-open-transaction.dto';
 import { BractagonGuard } from 'src/psp/modules/crms/modules/bractagon/guards/bractagon.guard';
 import { BractagonResponseGeneratePaymentLink } from 'src/psp/modules/crms/modules/bractagon/interfaces/bractagon-response-generate-payment-link.interface';
 import { BractagonService } from 'src/psp/modules/crms/modules/bractagon/services/bractagon.service';
 import { TcpayCallbackTransactionDto } from 'src/psp/modules/payment-methods/modules/tc-pay/dto/tcpay-callback-transaction.dto';
 import { TcpayCallbackGuard } from 'src/psp/modules/payment-methods/modules/tc-pay/guards/tcpay-callback.guard';
-// import { NotFoundRedirectFilter } from 'src/shared/filters/exception-filter';
 import { Response } from 'express';
 import { CoinBuyCallbackTransactionDto } from 'src/psp/modules/payment-methods/modules/coin-buy/dto/coinbuy-callback-transaction.dto';
 import { CoinBuyGuard } from 'src/psp/modules/payment-methods/modules/coin-buy/guards/coin-buy/coin-buy.guard';
+import { CustomRequest } from 'src/psp/modules/payment-methods/interfaces/cutom-request';
 
 @Controller('api/bractagon/transactions')
 export class BractagonController {
@@ -23,8 +23,8 @@ export class BractagonController {
 
     @Post('tc-pay/callback')
     @UseGuards(TcpayCallbackGuard)
-    async callbackTcPay(@Body() tcpayCallbackTransactionDto: TcpayCallbackTransactionDto, @Res() res: Response) {
-        const result = await this.bractagonService.callbackPayment(tcpayCallbackTransactionDto);
+    async callbackTcPay(@Res() res: Response, @Req() req: CustomRequest) {
+        const result = await this.bractagonService.callbackPayment(req.transaction);
         return result
     }
 
@@ -36,8 +36,8 @@ export class BractagonController {
 
     @Post('coin-buy/callback')
     @UseGuards(CoinBuyGuard)
-    async callbackCoinBuy(@Body() coinBuyCallbackTransactionDto: CoinBuyCallbackTransactionDto, @Res() res: Response) {
-        const result = await this.bractagonService.callbackPayment(coinBuyCallbackTransactionDto);
+    async callbackCoinBuy(@Res() res: Response, @Req() req: CustomRequest) {
+        const result = await this.bractagonService.callbackPayment(req.transaction);
         return result
     }
 

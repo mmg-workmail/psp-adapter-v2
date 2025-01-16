@@ -129,13 +129,10 @@ export class BractagonService {
         return bractagonResponseGeneratePaymentLink;
     }
 
-    async callbackPayment(tcpayCallbackTransactionDto: TcpayCallbackTransactionDto | any) {
+    async callbackPayment(transaction: Transaction) {
 
-        // const transaction = await this.transactionService.checkExternalOrderId(tcpayCallbackTransactionDto['data.Token']);
-        // const merchant = transaction.merchant;
-
-        // await this.sendCallbackPayment(transaction, merchant);
-
+        const merchant = transaction.merchant;
+        await this.sendCallbackPayment(transaction, merchant);
         return { statusCode: 200 };
 
     }

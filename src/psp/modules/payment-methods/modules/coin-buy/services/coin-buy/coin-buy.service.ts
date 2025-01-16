@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { BadRequestException, HttpStatus, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable, Logger, OnModuleInit, NotFoundException, UnauthorizedException, HttpException } from '@nestjs/common';
 import { AbstractPaymentGateway } from 'src/psp/modules/payment-methods/abstracts/method-service/payment-gateway.abstract';
 import { GatewayType } from 'src/psp/modules/payment-methods/enums/gateway-type';
 import { TransactionStatsService } from 'src/psp/modules/transaction/services/transaction-stats/transaction-stats.service';
@@ -17,6 +17,9 @@ import { CreateTransactionStatsDto } from 'src/psp/modules/transaction/dto/creat
 import { TransactionStatus } from 'src/psp/enums/TransactionStatus';
 import { ResponseCoinBuy, ResponseCoinBuyDeposit, ResponseCoinBuyRefreshToken, ResponseCoinBuyRelationships, ResponseCoinBuyToken } from '../../interfaces/response';
 import { GenerateCodeService } from 'src/shared/services/generate-code/generate-code.service';
+import { CoinBuyCallbackTransactionDto, IncludedTransferDto, MetaDto } from '../../dto/coinbuy-callback-transaction.dto';
+import { SignatureForCoinBuy } from '../../classes/signature/signature';
+import { GatewaysService } from 'src/psp/modules/gateways/gateways.service';
 
 @Injectable()
 export class CoinBuyService extends AbstractPaymentGateway implements OnModuleInit {
@@ -26,6 +29,8 @@ export class CoinBuyService extends AbstractPaymentGateway implements OnModuleIn
     constructor(
         private readonly transactionService: TransactionService,
         private readonly transactionStatsService: TransactionStatsService,
+        private readonly gatewaysService: GatewaysService,
+
         private readonly httpService: HttpService,
         private readonly generateCodeService: GenerateCodeService,
     ) {
@@ -158,7 +163,7 @@ export class CoinBuyService extends AbstractPaymentGateway implements OnModuleIn
                 attributes: {
                     label: 'ePlanet Deposit',
                     tracking_id: transaction.externalTrackNumber,
-                    confirmations_needed: 1,
+                    confirmations_needed: 3,
                     callback_url: this.config.callbackUrl,
                     payment_page_redirect_url: this.config.paymentPageRedirectUrl,
                     payment_page_button_text: this.config.paymentPageButtonText
@@ -240,6 +245,105 @@ export class CoinBuyService extends AbstractPaymentGateway implements OnModuleIn
         return {
             url: url
         }
+
+    }
+
+    async checkSignature(transaction: Transaction, lastIncludedTransfer: IncludedTransferDto, meta: MetaDto, trackingId: string): Promise<boolean> {
+        let result = true;
+
+        const callbackSign = meta.sign;
+        const callbackTime = meta.time;
+
+        const status = lastIncludedTransfer.attributes.status;
+        const amount = lastIncludedTransfer.attributes.amount;
+
+        const tracking_id = trackingId;
+
+        // prepare data for hash check
+        const message = status + amount + tracking_id + callbackTime;
+
+        const gateway = await this.gatewaysService.findOneByMerchantId(transaction.merchant.merchantId);
+        const coinBuyEncodedConfig = gateway.encodedConfig as CoinBuyEncodedConfig;
+        const coinBuyLoggin = coinBuyEncodedConfig.login;
+        const coinBuyPassword = coinBuyEncodedConfig.password;
+
+        // Store Start Transaction Stats
+        const getStartTransactionStatDto = new CreateTransactionStatsDto({
+            status: TransactionStatus.AUTHENTICATION_START,
+            transaction: transaction
+        });
+        await this.transactionStatsService.create(getStartTransactionStatDto);
+
+        const sign = new SignatureForCoinBuy();
+        const isValid = sign.isValid(callbackSign, message, coinBuyLoggin, coinBuyPassword);
+
+        if (!isValid) {
+            // Store Error Transaction Stats
+            const getErrorTransactionStatDto = new CreateTransactionStatsDto({
+                status: TransactionStatus.AUTHENTICATION_ERROR,
+                transaction: transaction
+            });
+            await this.transactionStatsService.create(getErrorTransactionStatDto);
+
+            result = false;
+            this.logger.error(`Signature is not valid`);
+            throw new UnauthorizedException('callback is not valid!');
+        } else {
+            // Store Approved Transaction Stats
+            const getApprovedTransactionStatDto = new CreateTransactionStatsDto({
+                status: TransactionStatus.AUTHENTICATION_APPROVED,
+                transaction: transaction
+            });
+            await this.transactionStatsService.create(getApprovedTransactionStatDto);
+        }
+
+        return result;
+
+    }
+    async checkCallback(payload: CoinBuyCallbackTransactionDto): Promise<Transaction> {
+
+
+        // Filter the included array for items of type 'transfer'
+        const includedTransfer = payload.included.filter(item => item.type == TypeCoinBuy.TRANSFER);
+
+        // Get the last element and safely access its attributes
+        const lastIncludedTransfer = includedTransfer.pop();
+
+        if (!lastIncludedTransfer && !lastIncludedTransfer.attributes) {
+            this.logger.error(`Transfer with this ${payload.data.attributes.tracking_id} not found`);
+            throw new NotFoundException('Transfer is not complete');
+        }
+
+        if (lastIncludedTransfer.attributes.status < 0) {
+            this.logger.error(`Transfer with this ${payload.data.attributes.tracking_id} track_id is rejected`);
+            throw new HttpException('', HttpStatus.OK);
+        } else if (lastIncludedTransfer.attributes.status < 2) {
+            this.logger.warn(`Transfer with this ${payload.data.attributes.tracking_id} track_id is Unconfirmed`);
+            throw new HttpException('', HttpStatus.OK);
+        } else {
+            this.logger.log(`Transfer with this ${payload.data.attributes.tracking_id} track_id is Confirmed`);
+        }
+
+        const transaction = await this.transactionService.checkExternalTrackNumber(payload.data.attributes.tracking_id);
+        if (!transaction) {
+            this.logger.error(`Transaction with this ${payload.data.attributes.tracking_id} track_number not found`);
+            throw new NotFoundException('Transaction is not found');
+        }
+
+        const transactionStats = await this.transactionStatsService.findLastItem(transaction.id);
+        if (!transactionStats) {
+            this.logger.error(`Transaction status is not found, Transaction ID : ${transaction.id}`);
+            throw new NotFoundException('Transaction status is not found');
+        }
+
+        await this.checkSignature(transaction, lastIncludedTransfer, payload.meta, payload.data.attributes.tracking_id);
+
+        transaction.actualDepositAmount = parseFloat(lastIncludedTransfer.attributes.amount)
+        transaction.requestDepositAmount = parseFloat(lastIncludedTransfer.attributes.amount)
+
+        await this.transactionService.save(transaction)
+
+        return transaction;
 
     }
 }
