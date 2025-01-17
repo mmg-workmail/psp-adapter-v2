@@ -42,7 +42,6 @@ export class CoinBuyService extends AbstractPaymentGateway implements OnModuleIn
 
     onModuleInit() {
         this.httpService.axiosRef.defaults.headers.common['Content-Type'] = 'application/vnd.api+json';
-        this.setToken();
     }
 
     private getConfig(gateway: Gateway) {
@@ -87,7 +86,6 @@ export class CoinBuyService extends AbstractPaymentGateway implements OnModuleIn
                 access_expired_at: data.data.attributes.access_expired_at,
                 refresh_expired_at: data.data.attributes.refresh_expired_at,
             }
-            this.setToken();
         } else {
             const message = `Loggin has accured, Response code is : ${status}`
             this.logger.error(message);
@@ -120,7 +118,6 @@ export class CoinBuyService extends AbstractPaymentGateway implements OnModuleIn
                     access_expired_at: data.data.attributes.access_expired_at,
                     refresh_expired_at: data.data.attributes.refresh_expired_at,
                 };
-                this.setToken();
             } else {
                 const message = `Refresh token error occurred, Response code is: ${status}`;
                 this.logger.error(message);
@@ -173,6 +170,10 @@ export class CoinBuyService extends AbstractPaymentGateway implements OnModuleIn
 
     private async createDeposit(transaction: Transaction) {
         const url = this.config.baseUrl + this.config.paymentRequest;
+        const headers = {
+            Authorization: `Bearer ${this.authCredentials.token}`
+        };
+
         const payload: RequestCoinBuy<RequestCoinBuyDeposit, RequestCoinBuyRelationships> = {
             data: {
                 type: TypeCoinBuy.DEPOSIT,
@@ -198,7 +199,7 @@ export class CoinBuyService extends AbstractPaymentGateway implements OnModuleIn
         this.logger.log('create deposit', JSON.stringify(payload), JSON.stringify(url));
 
         const { data, status, statusText } = await firstValueFrom(
-            this.httpService.post<ResponseCoinBuy<ResponseCoinBuyDeposit, ResponseCoinBuyRelationships>>(url, payload)
+            this.httpService.post<ResponseCoinBuy<ResponseCoinBuyDeposit, ResponseCoinBuyRelationships>>(url, payload, { headers })
         );
         if (status < 200 || status >= 300) {
             if (status === 401) {

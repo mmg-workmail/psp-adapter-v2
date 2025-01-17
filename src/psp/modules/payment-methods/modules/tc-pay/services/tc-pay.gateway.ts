@@ -1,6 +1,4 @@
-
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-
 import { GatewayType } from 'src/psp/modules/payment-methods/enums/gateway-type';
 
 import { TransactionService } from 'src/psp/modules/transaction/services/transaction/transaction.service';
@@ -220,15 +218,20 @@ export class TcPayGateway extends AbstractPaymentGateway {
             throw new NotFoundException('Transaction is not found');
         }
 
-        if (transaction.externalTrackNumber) {
-            this.logger.error(`Transaction was already done, Transaction ID : ${transaction.id}`);
-            throw new BadRequestException('Transaction was already done');
-        }
+        // if (transaction.externalTrackNumber) {
+        //     this.logger.error(`Transaction was already done, Transaction ID : ${transaction.id}`);
+        //     throw new BadRequestException('Transaction was already done');
+        // }
 
         const transactionStats = await this.transactionStatsService.findLastItem(transaction.id);
         if (!transactionStats) {
             this.logger.error(`Transaction status is not found, Transaction ID : ${transaction.id}`);
             throw new NotFoundException('Transaction status is not found');
+        }
+
+        if (transactionStats.status != TransactionStatus.PENDING) {
+            this.logger.error(`Transaction was already done, Transaction ID : ${transaction.id}`);
+            throw new BadRequestException('Transaction was already done');
         }
 
         const resCode = parseInt(payload.resCode);
@@ -248,7 +251,7 @@ export class TcPayGateway extends AbstractPaymentGateway {
 
         const paymentVerificationResult: TcpayVerificationTransactionDto = await this.checkPaymentVerification(payload, gateway, transaction);
 
-        transaction.externalTrackNumber = paymentVerificationResult.data.transactionId;
+        transaction.externalOrderId = paymentVerificationResult.data.transactionId;
         transaction.actualDepositAmount = paymentVerificationResult.data.amount;
         transaction.requestDepositAmount = paymentVerificationResult.data.amount;
 
