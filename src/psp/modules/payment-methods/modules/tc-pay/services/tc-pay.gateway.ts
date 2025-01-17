@@ -235,7 +235,7 @@ export class TcPayGateway extends AbstractPaymentGateway {
         }
 
         const resCode = parseInt(payload.resCode);
-        if (resCode) {
+        if (resCode > 0) {
             // Store Error Transaction Stats
             const errorTransactionStatDto = new CreateTransactionStatsDto({
                 status: TransactionStatus.PROCESSING_FAILED,

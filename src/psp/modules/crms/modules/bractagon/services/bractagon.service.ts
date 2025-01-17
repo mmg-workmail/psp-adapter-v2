@@ -129,14 +129,6 @@ export class BractagonService {
         return bractagonResponseGeneratePaymentLink;
     }
 
-    async callbackPayment(transaction: Transaction) {
-
-        const merchant = transaction.merchant;
-        await this.sendCallbackPayment(transaction, merchant);
-        return { statusCode: 200 };
-
-    }
-
     processPaymentProvider(gatewayType: GatewayType) {
 
         switch (gatewayType) {
@@ -152,9 +144,17 @@ export class BractagonService {
         }
     }
 
+    async callbackPayment(transaction: Transaction) {
+
+        const merchant = transaction.merchant;
+        await this.sendCallbackPayment(transaction, merchant);
+        return { statusCode: 200 };
+
+    }
     async sendCallbackPayment(transaction: Transaction, merchant: Merchant) {
 
-        const body: BractagonCallbackTransactionDto = {
+        const url: string = merchant.callbackUrl;
+        const payload: BractagonCallbackTransactionDto = {
             merchant_id: merchant.merchantId,
             order_no: transaction.orderId,
             transaction_id: transaction.externalTrackNumber,
@@ -164,9 +164,11 @@ export class BractagonService {
             status: 1,
         };
 
+        this.logger.log('payload of bractagon confirmed', JSON.stringify(payload));
+
         // Generate Sign
         const sign = new SignatureForBractagon(merchant.token);
-        body.sign = sign.generateSignature(body);
+        payload.sign = sign.generateSignature(payload);
 
         const headers = {
             'crm-pay-token': merchant.token,
@@ -175,7 +177,7 @@ export class BractagonService {
         try {
 
             await firstValueFrom(
-                this.httpService.post(merchant.callbackUrl, body, { headers })
+                this.httpService.post(url, payload, { headers })
             );
 
             const TransactionStatDto = new CreateTransactionStatsDto({
@@ -190,8 +192,8 @@ export class BractagonService {
                 status: TransactionStatus.ERROR,
                 transaction: transaction
             });
-
             await this.transactionStatsService.create(TransactionStatDto);
+
             this.logger.error(`Transaction was accured, Transaction ID : ${transaction.id}, with : ${error}`);
             throw new BadRequestException('Transaction was accured an error ');
 
