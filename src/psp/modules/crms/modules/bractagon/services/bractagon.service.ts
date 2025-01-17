@@ -158,8 +158,8 @@ export class BractagonService {
         const payload: BractagonCallbackTransactionDto = {
             merchant_id: merchant.merchantId,
             order_no: transaction.orderId,
-            // transaction_id: transaction.externalTrackNumber,
-            amount: transaction.actualDepositAmount,
+            transaction_id: transaction.externalTrackNumber.toString(),
+            amount: transaction.actualDepositAmount.toString(),
             currency: transaction.currency,
             time: +new Date(),
             status: 1,
@@ -171,9 +171,12 @@ export class BractagonService {
 
         this.logger.log('payload of bractagon confirmed', JSON.stringify(payload));
 
+
         const headers = {
             'crm-pay-token': merchant.token,
         };
+
+        this.logger.log('header of bractagon confirmed', JSON.stringify(headers));
 
         try {
 

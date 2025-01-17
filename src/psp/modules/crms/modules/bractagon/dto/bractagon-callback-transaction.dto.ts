@@ -18,7 +18,7 @@ export class BractagonCallbackTransactionDto {
 
     @IsNumber()
     @IsNotEmpty()
-    amount: number;
+    amount: string;
 
     @IsEnum(Currency)
     @IsNotEmpty()
