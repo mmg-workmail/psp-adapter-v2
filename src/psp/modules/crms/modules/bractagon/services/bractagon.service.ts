@@ -20,6 +20,7 @@ import { BractagonCallbackTransactionDto } from '../dto/bractagon-callback-trans
 import { firstValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { CoinBuyService } from 'src/psp/modules/payment-methods/modules/coin-buy/services/coin-buy/coin-buy.service';
+import { json } from 'stream/consumers';
 
 @Injectable()
 export class BractagonService {
@@ -157,7 +158,7 @@ export class BractagonService {
         const payload: BractagonCallbackTransactionDto = {
             merchant_id: merchant.merchantId,
             order_no: transaction.orderId,
-            transaction_id: transaction.externalTrackNumber,
+            // transaction_id: transaction.externalTrackNumber,
             amount: transaction.actualDepositAmount,
             currency: transaction.currency,
             time: +new Date(),
@@ -188,13 +189,15 @@ export class BractagonService {
 
         } catch (error) {
 
+            const errorMessage = error?.response?.data || 'An unknown error occurred';
+
             const TransactionStatDto = new CreateTransactionStatsDto({
                 status: TransactionStatus.ERROR,
                 transaction: transaction
             });
             await this.transactionStatsService.create(TransactionStatDto);
 
-            this.logger.error(`Transaction was accured, Transaction ID : ${transaction.id}, with : ${error}`);
+            this.logger.error(`Transaction was accured, Transaction ID : ${transaction.id}`, JSON.stringify(errorMessage));
             throw new BadRequestException('Transaction was accured an error ');
 
         }
