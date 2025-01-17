@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req, Res, UseFilters, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, Res, UseFilters, UseGuards } from '@nestjs/common';
 import { BractagonOpenTransactionDto } from 'src/psp/modules/crms/modules/bractagon/dto/bractagon-open-transaction.dto';
 import { BractagonGuard } from 'src/psp/modules/crms/modules/bractagon/guards/bractagon.guard';
 import { BractagonResponseGeneratePaymentLink } from 'src/psp/modules/crms/modules/bractagon/interfaces/bractagon-response-generate-payment-link.interface';
@@ -24,8 +24,7 @@ export class BractagonController {
     @Post('tc-pay/callback')
     @UseGuards(TcpayCallbackGuard)
     async callbackTcPay(@Res() res: Response, @Req() req: CustomRequest) {
-        const result = await this.bractagonService.callbackPayment(req.transaction);
-        return result
+        return await this.bractagonService.callbackPayment(req.transaction);
     }
 
     @UseGuards(BractagonGuard)
@@ -37,8 +36,7 @@ export class BractagonController {
     @Post('coin-buy/callback')
     @UseGuards(CoinBuyGuard)
     async callbackCoinBuy(@Res() res: Response, @Req() req: CustomRequest) {
-        const result = await this.bractagonService.callbackPayment(req.transaction);
-        return result
+        return await this.bractagonService.callbackPayment(req.transaction);
     }
 
 }

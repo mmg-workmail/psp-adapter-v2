@@ -20,7 +20,6 @@ import { BractagonCallbackTransactionDto } from '../dto/bractagon-callback-trans
 import { firstValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { CoinBuyService } from 'src/psp/modules/payment-methods/modules/coin-buy/services/coin-buy/coin-buy.service';
-import { json } from 'stream/consumers';
 
 @Injectable()
 export class BractagonService {
@@ -207,5 +206,4 @@ export class BractagonService {
 
 
     }
-
 }

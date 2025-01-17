@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { BadRequestException, HttpStatus, Injectable, Logger, OnModuleInit, NotFoundException, UnauthorizedException, HttpException } from '@nestjs/common';
+import { BadRequestException, HttpStatus, Injectable, Logger, NotFoundException, UnauthorizedException, HttpException } from '@nestjs/common';
 import { AbstractPaymentGateway } from 'src/psp/modules/payment-methods/abstracts/method-service/payment-gateway.abstract';
 import { GatewayType } from 'src/psp/modules/payment-methods/enums/gateway-type';
 import { TransactionStatsService } from 'src/psp/modules/transaction/services/transaction-stats/transaction-stats.service';
@@ -22,7 +22,7 @@ import { SignatureForCoinBuy } from '../../classes/signature/signature';
 import { GatewaysService } from 'src/psp/modules/gateways/gateways.service';
 
 @Injectable()
-export class CoinBuyService extends AbstractPaymentGateway implements OnModuleInit {
+export class CoinBuyService extends AbstractPaymentGateway {
 
     private readonly logger = new Logger(CoinBuyService.name, { timestamp: true });
 
@@ -40,8 +40,8 @@ export class CoinBuyService extends AbstractPaymentGateway implements OnModuleIn
     private authCredentials: AuthCredentials;
     private config: CoinBuyEncodedConfig;
 
-    onModuleInit() {
-        this.httpService.axiosRef.defaults.headers.common['Content-Type'] = 'application/vnd.api+json';
+    private headers = {
+        'Content-Type': 'application/vnd.api+json'
     }
 
     private getConfig(gateway: Gateway) {
@@ -76,7 +76,7 @@ export class CoinBuyService extends AbstractPaymentGateway implements OnModuleIn
         this.logger.log('loggin', JSON.stringify(payload), JSON.stringify(url));
 
         const { data, status } = await firstValueFrom(
-            this.httpService.post<ResponseCoinBuy<ResponseCoinBuyToken>>(url, payload)
+            this.httpService.post<ResponseCoinBuy<ResponseCoinBuyToken>>(url, payload, { headers: this.headers })
         );
 
         if (status === HttpStatus.OK) {
@@ -108,7 +108,7 @@ export class CoinBuyService extends AbstractPaymentGateway implements OnModuleIn
 
         try {
             const { data, status } = await firstValueFrom(
-                this.httpService.post<ResponseCoinBuy<ResponseCoinBuyRefreshToken>>(url, payload)
+                this.httpService.post<ResponseCoinBuy<ResponseCoinBuyRefreshToken>>(url, payload, { headers: this.headers })
             );
 
             if (status === HttpStatus.OK) {
@@ -199,7 +199,7 @@ export class CoinBuyService extends AbstractPaymentGateway implements OnModuleIn
         this.logger.log('create deposit', JSON.stringify(payload), JSON.stringify(url));
 
         const { data, status, statusText } = await firstValueFrom(
-            this.httpService.post<ResponseCoinBuy<ResponseCoinBuyDeposit, ResponseCoinBuyRelationships>>(url, payload, { headers })
+            this.httpService.post<ResponseCoinBuy<ResponseCoinBuyDeposit, ResponseCoinBuyRelationships>>(url, payload, { headers: { ...headers, ...this.headers } })
         );
         if (status < 200 || status >= 300) {
             if (status === 401) {
