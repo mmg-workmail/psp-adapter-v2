@@ -165,11 +165,11 @@ export class BractagonService {
             status: 1,
         };
 
-        this.logger.log('payload of bractagon confirmed', JSON.stringify(payload));
-
         // Generate Sign
         const sign = new SignatureForBractagon(merchant.token);
         payload.sign = sign.generateSignature(payload);
+
+        this.logger.log('payload of bractagon confirmed', JSON.stringify(payload));
 
         const headers = {
             'crm-pay-token': merchant.token,
