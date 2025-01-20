@@ -73,21 +73,28 @@ export class CoinBuyService extends AbstractPaymentGateway {
 
         this.logger.log('loggin', JSON.stringify(payload), JSON.stringify(url));
 
-        const { data, status } = await firstValueFrom(
-            this.httpService.post<ResponseCoinBuy<ResponseCoinBuyToken>>(url, payload, { headers: this.headers })
-        );
+        try {
+            const { data, status } = await firstValueFrom(
+                this.httpService.post<ResponseCoinBuy<ResponseCoinBuyToken>>(url, payload, { headers: this.headers })
+            );
 
-        if (status === HttpStatus.OK) {
-            this.authCredentials = {
-                token: data.data.attributes.access,
-                refresh: data.data.attributes.refresh,
-                access_expired_at: data.data.attributes.access_expired_at,
-                refresh_expired_at: data.data.attributes.refresh_expired_at,
+            if (status === HttpStatus.OK) {
+                this.authCredentials = {
+                    token: data.data.attributes.access,
+                    refresh: data.data.attributes.refresh,
+                    access_expired_at: data.data.attributes.access_expired_at,
+                    refresh_expired_at: data.data.attributes.refresh_expired_at,
+                }
+            } else {
+                const message = `Loggin was accured, Response code is : ${status}`
+                this.logger.error(message);
+                throw new BadRequestException(message);
             }
-        } else {
-            const message = `Loggin has accured, Response code is : ${status}`
-            this.logger.error(message);
-            throw new BadRequestException(message);
+
+        } catch (error) {
+            const errorMessage = error?.response?.data || `Loggin was accured`;
+            this.logger.error(errorMessage, error);
+            throw new BadRequestException('Loggin was accured');
         }
 
     }
