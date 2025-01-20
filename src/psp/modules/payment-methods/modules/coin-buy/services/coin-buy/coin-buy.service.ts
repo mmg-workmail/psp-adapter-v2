@@ -45,9 +45,7 @@ export class CoinBuyService extends AbstractPaymentGateway {
     }
 
     private getConfig(gateway: Gateway) {
-        if (!this.config) {
-            this.config = gateway.encodedConfig as CoinBuyEncodedConfig
-        }
+        this.config = gateway.encodedConfig as CoinBuyEncodedConfig
     }
     private async setToken() {
         if (this.authCredentials?.token) {
