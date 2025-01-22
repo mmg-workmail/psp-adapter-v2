@@ -71,7 +71,7 @@ export class CoinBuyService extends AbstractPaymentGateway {
             }
         }
 
-        this.logger.log('loggin', JSON.stringify(payload), JSON.stringify(url));
+        this.logger.log('loggin request is being sent', JSON.stringify(url));
 
         try {
             const { data, status } = await firstValueFrom(
@@ -124,14 +124,17 @@ export class CoinBuyService extends AbstractPaymentGateway {
                     refresh_expired_at: data.data.attributes.refresh_expired_at,
                 };
             } else {
+                this.authCredentials = null;
                 const message = `Refresh token error occurred, Response code is: ${status}`;
                 this.logger.error(message);
-                throw new BadRequestException(message);
+                // throw new BadRequestException(message);
+                await this.loggin();
             }
         } catch (error) {
             this.authCredentials = null;
             this.logger.error('Error during refresh token process', error);
-            throw new BadRequestException('Error during refresh token process');
+            //throw new BadRequestException('Error during refresh token process');
+            await this.loggin();
         }
 
     }
@@ -201,7 +204,7 @@ export class CoinBuyService extends AbstractPaymentGateway {
             }
         }
 
-        this.logger.log('create deposit', JSON.stringify(payload), JSON.stringify(url));
+        this.logger.log('create deposit is being sent', JSON.stringify(payload), JSON.stringify(url));
 
         const { data, status, statusText } = await firstValueFrom(
             this.httpService.post<ResponseCoinBuy<ResponseCoinBuyDeposit, ResponseCoinBuyRelationships>>(url, payload, { headers: { ...headers, ...this.headers } })
@@ -223,6 +226,8 @@ export class CoinBuyService extends AbstractPaymentGateway {
             this.logger.error(message);
             throw new BadRequestException(message);
         }
+
+        this.logger.log('create deposit is received', JSON.stringify(data), JSON.stringify(url));
 
         return {
             url: data.data.attributes.payment_page
