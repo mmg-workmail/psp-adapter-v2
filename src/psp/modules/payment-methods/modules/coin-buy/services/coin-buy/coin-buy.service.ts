@@ -183,7 +183,7 @@ export class CoinBuyService extends AbstractPaymentGateway {
             data: {
                 type: TypeCoinBuy.DEPOSIT,
                 attributes: {
-                    label: 'ePlanet Deposit',
+                    label: transaction.orderId,
                     tracking_id: transaction.externalTrackNumber,
                     confirmations_needed: 2,
                     callback_url: this.config.callbackUrl,
