@@ -151,6 +151,7 @@ export class BractagonService {
         return { statusCode: 200 };
 
     }
+
     async sendCallbackPayment(transaction: Transaction, merchant: Merchant) {
 
         const url: string = merchant.callbackUrl;
