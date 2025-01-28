@@ -7,12 +7,13 @@ export class SignatureForCoinBuy {
         return generatedSignature === signature;
     }
 
-    public generateSignature(requestData: string, login: string, password: string): string {
-        // Generate SHA-256 hash of login and password
-        const hashSecret = CryptoJS.SHA256(login + password).toString(CryptoJS.enc.Hex);
+    public generateSignature(message: string, login: string, password: string): string {
 
-        // Generate HMAC with SHA-256
-        const signature = CryptoJS.HmacSHA256(requestData, hashSecret).toString(CryptoJS.enc.Hex);
+        // Step 2: Generate hash secret
+        const hashSecret = CryptoJS.SHA256(login + password); // Outputs a WordArray object
+
+        // Step 3: Generate HMAC
+        const signature = CryptoJS.HmacSHA256(message, hashSecret).toString(CryptoJS.enc.Hex);
 
         return signature;
     }
