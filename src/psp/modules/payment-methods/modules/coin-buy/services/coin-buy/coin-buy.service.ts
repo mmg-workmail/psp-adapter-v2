@@ -205,6 +205,7 @@ export class CoinBuyService extends AbstractPaymentGateway {
         }
 
         this.logger.log('create deposit is being sent', JSON.stringify(payload), JSON.stringify(url));
+        // this.logger.log('Auth Credentials', JSON.stringify(this.authCredentials), JSON.stringify(headers));
 
         const { data, status, statusText } = await firstValueFrom(
             this.httpService.post<ResponseCoinBuy<ResponseCoinBuyDeposit, ResponseCoinBuyRelationships>>(url, payload, { headers: { ...headers, ...this.headers } })

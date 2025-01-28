@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, Injectable, Logger } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 
 import { CoinBuyCallbackTransactionDto } from 'src/psp/modules/payment-methods/modules/coin-buy/dto/coinbuy-callback-transaction.dto';
@@ -25,6 +25,11 @@ export class CoinBuyGuard implements CanActivate {
     const payload = plainToInstance(CoinBuyCallbackTransactionDto, request.body);
 
     this.logger.log('payload of CoinBuy callback', JSON.stringify(payload));
+
+    if (!payload) {
+      this.logger.log('payload of CoinBuy is Null', JSON.stringify(request.body));
+      throw new NotFoundException();
+    }
 
     const transaction = await this.coinBuyService.checkCallback(payload);
 
