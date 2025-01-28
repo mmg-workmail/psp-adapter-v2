@@ -26,15 +26,6 @@ export class CoinBuyGuard implements CanActivate {
 
     this.logger.log('payload of CoinBuy callback', JSON.stringify(payload), JSON.stringify(request.body));
 
-    console.log('Body:', request.body);       // داده‌های ارسالی در بدنه (POST/PUT)
-    console.log('Query:', request.query);     // پارامترهای کوئری (GET)
-    console.log('Params:', request.params);   // پارامترهای مسیر (Route Parameters)
-    console.log('Headers:', request.headers); // هدرهای ارسال شده
-    console.log('IP:', request.ip);           // آی‌پی کاربر
-    console.log('Method:', request.method);   // نوع درخواست (GET, POST, PUT, DELETE)
-    console.log('URL:', request.url);         // URL درخواست    
-
-
     const transaction = await this.coinBuyService.checkCallback(payload);
 
     // Adding data to the request object
