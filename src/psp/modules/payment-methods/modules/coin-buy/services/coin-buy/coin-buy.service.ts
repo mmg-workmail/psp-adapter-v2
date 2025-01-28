@@ -188,7 +188,7 @@ export class CoinBuyService extends AbstractPaymentGateway {
                 attributes: {
                     label: transaction.orderId,
                     tracking_id: transaction.externalTrackNumber,
-                    confirmations_needed: null,
+                    confirmations_needed: 2,
                     callback_url: this.config.callbackUrl,
                     payment_page_redirect_url: this.config.paymentPageRedirectUrl,
                     payment_page_button_text: this.config.paymentPageButtonText

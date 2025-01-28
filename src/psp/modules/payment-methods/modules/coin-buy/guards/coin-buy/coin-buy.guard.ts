@@ -24,12 +24,8 @@ export class CoinBuyGuard implements CanActivate {
     // Transform the plain payload into a DTO instance
     const payload = plainToInstance(CoinBuyCallbackTransactionDto, request.body);
 
-    this.logger.log('payload of CoinBuy callback', JSON.stringify(payload));
-
-    if (!payload) {
-      this.logger.log('payload of CoinBuy is Null', JSON.stringify(request.body));
-      throw new NotFoundException();
-    }
+    this.logger.log('payload of CoinBuy callback', JSON.stringify(payload), JSON.stringify(request.body));
+    this.logger.log('body', JSON.stringify(request.body), JSON.stringify(request),);
 
     const transaction = await this.coinBuyService.checkCallback(payload);
 
