@@ -290,6 +290,8 @@ export class CoinBuyService extends AbstractPaymentGateway {
 
         const tracking_id = trackingId;
 
+
+
         // prepare data for hash check
         const message = status + amount + tracking_id + callbackTime;
 
@@ -307,6 +309,8 @@ export class CoinBuyService extends AbstractPaymentGateway {
 
         const sign = new SignatureForCoinBuy();
         const isValid = sign.isValid(callbackSign, message, coinBuyLoggin, coinBuyPassword);
+
+        this.logger.log(`sign => status : ${status} + amount : ${amount} + tracking_id : ${tracking_id} + callbackTime : ${callbackTime}`);
 
         if (!isValid) {
             // Store Error Transaction Stats
