@@ -22,7 +22,15 @@ export class BractagonController {
     @Post('tc-pay/callback')
     @UseGuards(TcpayCallbackGuard)
     async callbackTcPay(@Res() res: Response, @Req() req: CustomRequest) {
-        return await this.bractagonService.callbackPayment(req.transaction);
+        try {
+            // Process the transaction asynchronously
+            await this.bractagonService.callbackPayment(req.transaction);
+
+            // Immediately return 200 OK (so the API doesn't hang)
+            return res.status(200).json({ message: 'Callback received, processing...' });
+        } catch (error) {
+            return res.status(500).json({ error: 'Internal Server Error' });
+        }
     }
 
     @UseGuards(BractagonGuard)
@@ -34,7 +42,15 @@ export class BractagonController {
     @Post('coin-buy/callback')
     @UseGuards(CoinBuyGuard)
     async callbackCoinBuy(@Res() res: Response, @Req() req: CustomRequest) {
-        return await this.bractagonService.callbackPayment(req.transaction);
+        try {
+            // Process the transaction asynchronously
+            await this.bractagonService.callbackPayment(req.transaction);
+
+            // Immediately return 200 OK (so the API doesn't hang)
+            return res.status(200).json({ message: 'Callback received, processing...' });
+        } catch (error) {
+            return res.status(500).json({ error: 'Internal Server Error' });
+        }
     }
 
 }

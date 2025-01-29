@@ -145,12 +145,8 @@ export class BractagonService {
     }
 
     async callbackPayment(transaction: Transaction) {
-
         const merchant = transaction.merchant;
         await this.sendCallbackPayment(transaction, merchant);
-        this.logger.log('Everything is done');
-        return { statusCode: 200 };
-
     }
 
     async sendCallbackPayment(transaction: Transaction, merchant: Merchant) {
