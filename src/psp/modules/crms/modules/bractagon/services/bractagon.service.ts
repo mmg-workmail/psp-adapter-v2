@@ -148,6 +148,7 @@ export class BractagonService {
 
         const merchant = transaction.merchant;
         await this.sendCallbackPayment(transaction, merchant);
+        this.logger.log('Everything is done');
         return { statusCode: 200 };
 
     }
@@ -189,7 +190,6 @@ export class BractagonService {
                 transaction: transaction
             });
             await this.transactionStatsService.create(TransactionStatDto);
-
         } catch (error) {
 
             const errorMessage = error?.response?.data || 'An unknown error occurred';
