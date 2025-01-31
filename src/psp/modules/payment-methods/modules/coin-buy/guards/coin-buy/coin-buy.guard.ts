@@ -29,6 +29,10 @@ export class CoinBuyGuard implements CanActivate {
     console.log('Method:', request.method);   // Request Method
     console.log('URL:', request.url);         // Request Url 
 
+    if (!(request.body.data || request.body.included || request.body.meta)) {
+      throw new NotFoundException('payload is empty', JSON.stringify(request.body));
+    }
+
     // Transform the plain payload into a DTO instance
     const payload = plainToInstance(CoinBuyCallbackTransactionDto, request.body);
 
