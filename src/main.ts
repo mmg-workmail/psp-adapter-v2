@@ -1,6 +1,7 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import * as express from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -12,6 +13,9 @@ async function bootstrap() {
       // transform: false, // Automatically transform payloads to DTOs
     }),
   );
+
+  // Ensure NestJS parses application/vnd.api+json as JSON
+  app.use(express.json({ type: ['application/vnd.api+json', 'application/json'] }));
 
   await app.listen(process.env.APP_PORT ?? 3000);
 }
