@@ -17,7 +17,7 @@ import { CreateTransactionStatsDto } from 'src/psp/modules/transaction/dto/creat
 import { TransactionStatus } from 'src/psp/enums/TransactionStatus';
 import { ResponseCoinBuy, ResponseCoinBuyDeposit, ResponseCoinBuyRefreshToken, ResponseCoinBuyRelationships, ResponseCoinBuyToken } from '../../interfaces/response';
 import { GenerateCodeService } from 'src/shared/services/generate-code/generate-code.service';
-import { CoinBuyCallbackTransactionDto, IncludedTransferDto, MetaDto } from '../../dto/coinbuy-callback-transaction.dto';
+import { CoinBuyCallbackTransactionDto, IncludedCurrencyDto, IncludedTransferDto, MetaDto } from '../../dto/coinbuy-callback-transaction.dto';
 import { SignatureForCoinBuy } from '../../classes/signature/signature';
 import { GatewaysService } from 'src/psp/modules/gateways/gateways.service';
 
@@ -78,17 +78,11 @@ export class CoinBuyService extends AbstractPaymentGateway {
                 this.httpService.post<ResponseCoinBuy<ResponseCoinBuyToken>>(url, payload, { headers: this.headers })
             );
 
-            if (status === HttpStatus.OK) {
-                this.authCredentials = {
-                    token: data.data.attributes.access,
-                    refresh: data.data.attributes.refresh,
-                    access_expired_at: data.data.attributes.access_expired_at,
-                    refresh_expired_at: data.data.attributes.refresh_expired_at,
-                }
-            } else {
-                const message = `Loggin was accured, Response code is : ${status}`
-                this.logger.error(message);
-                throw new BadRequestException(message);
+            this.authCredentials = {
+                token: data.data.attributes.access,
+                refresh: data.data.attributes.refresh,
+                access_expired_at: data.data.attributes.access_expired_at,
+                refresh_expired_at: data.data.attributes.refresh_expired_at,
             }
 
         } catch (error) {
@@ -160,7 +154,6 @@ export class CoinBuyService extends AbstractPaymentGateway {
     }
     private async checkAuthenticated(): Promise<boolean> {
         let result = true
-
         if (!this.authCredentials) {
             await this.loggin();
         } else {
@@ -371,8 +364,15 @@ export class CoinBuyService extends AbstractPaymentGateway {
 
         await this.checkSignature(transaction, lastIncludedTransfer, payload.meta, payload.data.attributes.tracking_id);
 
-        transaction.actualDepositAmount = parseFloat(lastIncludedTransfer.attributes.amount)
-        transaction.requestDepositAmount = parseFloat(lastIncludedTransfer.attributes.amount)
+        transaction.actualDepositAmount = parseFloat(lastIncludedTransfer.attributes.amount) * parseFloat(lastIncludedTransfer.attributes.rate_target);
+        transaction.requestDepositAmount = parseFloat(lastIncludedTransfer.attributes.amount);
+        transaction.exchangeValue = parseFloat(lastIncludedTransfer.attributes.rate_target);
+
+        // Filter the included array for items of type 'currency'
+        const includedCurrency = payload.included.find(item => item.type == TypeCoinBuy.CURRENCY);
+        if (includedCurrency) {
+            transaction.actualCurrency = includedCurrency.attributes.name;
+        }
 
         await this.transactionService.save(transaction)
 

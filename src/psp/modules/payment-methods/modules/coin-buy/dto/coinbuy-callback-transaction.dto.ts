@@ -29,6 +29,7 @@ export class TransferAttributesDto {
     op_id: number;
     op_type: number;
     amount: string;
+    rate_target: string;
     commission: string;
     fee: string;
     txid: string;

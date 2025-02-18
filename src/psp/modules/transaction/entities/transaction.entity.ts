@@ -53,6 +53,9 @@ export class Transaction {
     @Column({ type: 'enum', enum: Currency, default: Currency.TOM, name: 'currency' })
     currency: Currency;
 
+    @Column({ type: 'varchar', nullable: true, name: 'actual_currency' })
+    actualCurrency: string;
+
     @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
     createdAt: Date;
 
