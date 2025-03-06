@@ -7,6 +7,7 @@ import { GatewaysModule } from 'src/psp/modules/gateways/gateways.module';
 import { MerchantModule } from 'src/psp/modules/merchant/merchant.module';
 import { TransactionModule } from 'src/psp/modules/transaction/transaction.module';
 import { SharedModule } from 'src/shared/shared.module';
+import { RateController } from './controllers/rate/rate.controller';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { SharedModule } from 'src/shared/shared.module';
     HttpModule, SharedModule
   ],
   providers: [CoinBuyService],
-  exports: [CoinBuyService]
+  exports: [CoinBuyService],
+  controllers: [RateController]
 })
 export class CoinBuyModule { }

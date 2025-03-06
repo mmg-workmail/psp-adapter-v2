@@ -6,6 +6,7 @@ import { Gateway } from './entities/gateway.entity';
 import { Repository } from 'typeorm';
 import { MerchantService } from '../merchant/merchant.service';
 import { Merchant } from '../merchant/entities/merchant.entity';
+import { GatewayType } from '../payment-methods/enums/gateway-type';
 
 @Injectable()
 export class GatewaysService {
@@ -106,6 +107,15 @@ export class GatewaysService {
         }
       },
       relations: ['merchant'], // Ensure the `merchant` relation is loaded
+    });
+  }
+
+  findOneByType(type: GatewayType) {
+    this.logger.log('The item was found by GatewayType', type);
+    return this.gatewayRepository.findOne({
+      where: {
+        type
+      }
     });
   }
 
