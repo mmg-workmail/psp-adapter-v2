@@ -12,7 +12,11 @@ export interface CoinBuyEncodedConfig {
     paymentPageRedirectUrl: string,
     paymentPageButtonText: string,
 
-    currencies: { [key: string]: string }
+    currencies: { [key: string]: Currency }
 
 }
 
+export interface Currency {
+    id: string,
+    code: string
+}

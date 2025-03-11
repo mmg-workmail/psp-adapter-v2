@@ -20,6 +20,7 @@ import { GenerateCodeService } from 'src/shared/services/generate-code/generate-
 import { CoinBuyCallbackTransactionDto, IncludedCurrencyDto, IncludedTransferDto, MetaDto } from '../../dto/coinbuy-callback-transaction.dto';
 import { SignatureForCoinBuy } from '../../classes/signature/signature';
 import { GatewaysService } from 'src/psp/modules/gateways/gateways.service';
+import { Rate } from '../../interfaces/rate';
 
 @Injectable()
 export class CoinBuyService extends AbstractPaymentGateway {
@@ -44,11 +45,16 @@ export class CoinBuyService extends AbstractPaymentGateway {
         'Content-Type': 'application/vnd.api+json'
     }
 
-    private getConfig(gateway: Gateway | null = null) {
-        if (gateway) {
-            this.config = gateway.encodedConfig as CoinBuyEncodedConfig
+    private async getConfig(gateway: Gateway | null = null) {
+
+        if (!gateway) {
+            gateway = await this.gatewaysService.findOneByType(this.gatewayType);
         }
+
+        this.config = gateway.encodedConfig as CoinBuyEncodedConfig
+
     }
+
     private async setToken() {
         if (this.authCredentials?.token) {
             this.httpService.axiosRef.defaults.headers.common['Authorization'] = `Bearer ${this.authCredentials.token}`
@@ -194,7 +200,7 @@ export class CoinBuyService extends AbstractPaymentGateway {
                     currency: {
                         data: {
                             type: TypeCoinBuy.CURRENCY,
-                            id: currencies[transaction.currency]
+                            id: currencies[transaction.currency].id
                         },
                     },
                     wallet: {
@@ -277,8 +283,6 @@ export class CoinBuyService extends AbstractPaymentGateway {
 
         // set Config
         this.getConfig(gateway);
-
-
 
         // check authentication
         await this.checkAuthenticated();
@@ -382,7 +386,9 @@ export class CoinBuyService extends AbstractPaymentGateway {
 
         await this.checkSignature(transaction, lastIncludedTransfer, payload.meta, payload.data.attributes.tracking_id);
 
-        transaction.actualDepositAmount = parseFloat(lastIncludedTransfer.attributes.amount) * parseFloat(lastIncludedTransfer.attributes.rate_target);
+        // transaction.actualDepositAmount = parseFloat(lastIncludedTransfer.attributes.amount) * parseFloat(lastIncludedTransfer.attributes.rate_target);
+        transaction.actualDepositAmount = parseFloat(lastIncludedTransfer.attributes.amount);
+
         transaction.requestDepositAmount = parseFloat(lastIncludedTransfer.attributes.amount);
         transaction.exchangeValue = parseFloat(lastIncludedTransfer.attributes.rate_target);
 
@@ -397,7 +403,7 @@ export class CoinBuyService extends AbstractPaymentGateway {
         return transaction;
 
     }
-    async getRate() {
+    async getRate(currency: string) {
 
         // set Config
         await this.getConfig();
@@ -405,15 +411,27 @@ export class CoinBuyService extends AbstractPaymentGateway {
         // check authentication
         await this.checkAuthenticated();
 
-        const url = this.config.baseUrl + "/rates";
-
+        const url = this.config.baseUrl + `/rates?filter[left]=${currency}&filter[right]=USDT`;
         const headers = {
             Authorization: `Bearer ${this.authCredentials.token}`
         };
 
-        return firstValueFrom(
-            this.httpService.post<ResponseCoinBuy<ResponseCoinBuyDeposit, ResponseCoinBuyRelationships>>(url, { headers: { ...headers, ...this.headers } })
-        );
+        try {
+            const { data, status } = await firstValueFrom(
+                this.httpService.get<Rate>(url, { headers: { ...headers, ...this.headers } })
+            );
+
+            const currency = data.data[0];
+
+            return {
+                rate: parseFloat(currency.attributes.bid)
+            }
+
+        } catch (error) {
+            const errorMessage = error?.response?.data || `Loggin was accured`;
+            this.logger.error(errorMessage, error);
+            throw new BadRequestException('Loggin was accured');
+        }
 
     }
 }
