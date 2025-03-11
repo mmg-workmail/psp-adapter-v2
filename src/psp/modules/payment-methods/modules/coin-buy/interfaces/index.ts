@@ -11,5 +11,8 @@ export interface CoinBuyEncodedConfig {
     callbackUrl: string,
     paymentPageRedirectUrl: string,
     paymentPageButtonText: string,
+
+    currencies: { [key: string]: string }
+
 }
 

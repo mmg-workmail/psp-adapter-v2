@@ -175,6 +175,8 @@ export class CoinBuyService extends AbstractPaymentGateway {
             Authorization: `Bearer ${this.authCredentials.token}`
         };
 
+        const currencies = this.config.currencies;
+
         const payload: RequestCoinBuy<RequestCoinBuyDeposit, RequestCoinBuyRelationships> = {
             data: {
                 type: TypeCoinBuy.DEPOSIT,
@@ -187,6 +189,12 @@ export class CoinBuyService extends AbstractPaymentGateway {
                     payment_page_button_text: this.config.paymentPageButtonText
                 },
                 relationships: {
+                    currency: {
+                        data: {
+                            type: TypeCoinBuy.CURRENCY,
+                            id: currencies[transaction.currency]
+                        },
+                    },
                     wallet: {
                         data: {
                             type: TypeCoinBuy.WALLET,
@@ -231,6 +239,12 @@ export class CoinBuyService extends AbstractPaymentGateway {
 
     async createIpg(transaction: Transaction) {
 
+        const currencies = this.config.currencies;
+        if (!currencies[transaction.currency]) {
+            this.logger.log('This currency is not supported by system', transaction.currency);
+            throw new BadRequestException('This Currency is not supported by system');
+        }
+
         // Store Get Link Transaction Stats
         const getLinkTransactionStatDto = new CreateTransactionStatsDto({
             status: TransactionStatus.GET_LINK,
@@ -261,6 +275,8 @@ export class CoinBuyService extends AbstractPaymentGateway {
 
         // set Config
         this.getConfig(gateway);
+
+
 
         // check authentication
         await this.checkAuthenticated();

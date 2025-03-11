@@ -24,6 +24,12 @@ export interface RequestCoinBuyDeposit {
     payment_page_button_text: string
 }
 export interface RequestCoinBuyRelationships {
+    currency?: {
+        data: {
+            type: TypeCoinBuy.CURRENCY,
+            id: string
+        }
+    },
     wallet: {
         data: {
             type: TypeCoinBuy.WALLET,
