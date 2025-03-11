@@ -44,8 +44,10 @@ export class CoinBuyService extends AbstractPaymentGateway {
         'Content-Type': 'application/vnd.api+json'
     }
 
-    private getConfig(gateway: Gateway) {
-        this.config = gateway.encodedConfig as CoinBuyEncodedConfig
+    private getConfig(gateway: Gateway | null = null) {
+        if (gateway) {
+            this.config = gateway.encodedConfig as CoinBuyEncodedConfig
+        }
     }
     private async setToken() {
         if (this.authCredentials?.token) {
@@ -393,6 +395,25 @@ export class CoinBuyService extends AbstractPaymentGateway {
         await this.transactionService.save(transaction)
 
         return transaction;
+
+    }
+    async getRate() {
+
+        // set Config
+        await this.getConfig();
+
+        // check authentication
+        await this.checkAuthenticated();
+
+        const url = this.config.baseUrl + "/rates";
+
+        const headers = {
+            Authorization: `Bearer ${this.authCredentials.token}`
+        };
+
+        return firstValueFrom(
+            this.httpService.post<ResponseCoinBuy<ResponseCoinBuyDeposit, ResponseCoinBuyRelationships>>(url, { headers: { ...headers, ...this.headers } })
+        );
 
     }
 }
